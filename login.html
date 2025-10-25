@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Aurora - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#7f13ec",
+              "background-light": "#f7f6f8",
+              "background-dark": "#191022",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden p-4">
+<!-- Background decorations -->
+<div class="absolute -top-1/4 -left-1/4 h-1/2 w-1/2 rounded-full bg-primary/20 blur-3xl animate-[spin_20s_linear_infinite]"></div>
+<div class="absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full bg-primary/20 blur-3xl animate-[spin_20s_linear_infinite_reverse]"></div>
+<div class="flex w-full max-w-md flex-col items-center gap-6">
+<div class="flex flex-col items-center gap-2 text-center">
+<h1 class="text-white tracking-light text-[32px] font-bold leading-tight">Project Aurora</h1>
+</div>
+<div class="relative z-10 flex w-full flex-col rounded-xl border border-white/10 bg-black/20 p-6 backdrop-blur-md">
+<div class="mb-4">
+<div class="flex h-10 w-full items-center justify-center rounded-lg bg-white/5 p-1">
+<label class="flex h-full flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-medium leading-normal text-white/60 has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:shadow-[0_1px_10px_0_rgba(127,19,236,0.5)] transition-colors">
+<span class="truncate">Sign In</span>
+<input checked="" class="invisible w-0" name="auth-toggle" type="radio" value="Sign In"/>
+</label>
+<label class="flex h-full flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-medium leading-normal text-white/60 has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:shadow-[0_1px_10px_0_rgba(127,19,236,0.5)] transition-colors">
+<span class="truncate">Sign Up</span>
+<input class="invisible w-0" name="auth-toggle" type="radio" value="Sign Up"/>
+</label>
+</div>
+</div>
+<div class="flex flex-col items-center gap-2">
+<h2 class="text-white tracking-light text-[28px] font-bold leading-tight">Welcome Back</h2>
+<p class="text-white/60 text-base font-normal leading-normal">Enter your credentials to access your account.</p>
+</div>
+<form class="mt-8 flex flex-col gap-6">
+<div class="flex flex-col">
+<label class="flex flex-col gap-2">
+<p class="text-white text-base font-medium leading-normal">Email Address</p>
+<input class="form-input flex h-14 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-white/10 bg-white/5 p-[15px] text-base font-normal leading-normal text-white placeholder:text-white/40 ring-primary/50 transition-all focus:border-primary/80 focus:outline-0 focus:ring-2" placeholder="Enter your email" type="email" value=""/>
+</label>
+</div>
+<div class="flex flex-col">
+<label class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<p class="text-white text-base font-medium leading-normal">Password</p>
+<a class="text-primary/80 text-sm font-medium hover:text-primary" href="#">Forgot Password?</a>
+</div>
+<div class="group/password flex w-full flex-1 items-stretch rounded-lg border border-white/10 bg-white/5 ring-primary/50 transition-all focus-within:border-primary/80 focus-within:ring-2">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-l-lg border-0 bg-transparent p-[15px] pr-2 text-base font-normal leading-normal text-white placeholder:text-white/40 focus:outline-0 focus:ring-0" placeholder="Enter your password" type="password" value=""/>
+<button class="flex items-center justify-center rounded-r-lg bg-transparent pr-[15px] text-white/40 group-focus-within/password:text-primary" type="button">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+</label>
+</div>
+<button class="flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-bold text-white shadow-[0_4px_14px_0_rgba(127,19,236,0.39)] transition-all hover:bg-primary/90 hover:shadow-[0_6px_20px_0_rgba(127,19,236,0.23)]">Sign In</button>
+</form>
+<div class="my-6 flex items-center gap-4">
+<hr class="w-full border-t border-white/10"/>
+<p class="text-sm font-medium text-white/40">OR</p>
+<hr class="w-full border-t border-white/10"/>
+</div>
+<button class="flex h-12 items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 text-base font-bold text-white transition-colors hover:bg-white/10">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.56 12.25C22.56 11.45 22.49 10.68 22.36 9.92H12V14.45H18.02C17.74 15.93 16.92 17.18 15.68 18.01V20.6H19.5C21.46 18.88 22.56 15.89 22.56 12.25Z" fill="#4285F4"></path>
+<path d="M12 23C14.97 23 17.45 22.02 19.5 20.6L15.68 18.01C14.69 18.68 13.45 19.07 12 19.07C9.12 19.07 6.65 17.14 5.76 14.54H1.88V17.21C3.83 20.89 7.62 23 12 23Z" fill="#34A853"></path>
+<path d="M5.76 14.54C5.56 13.92 5.45 13.27 5.45 12.59C5.45 11.91 5.56 11.26 5.76 10.64V7.97H1.88C1.22 9.24 0.88 10.83 0.88 12.59C0.88 14.35 1.22 15.94 1.88 17.21L5.76 14.54Z" fill="#FBBC05"></path>
+<path d="M12 6.13C13.59 6.13 15.08 6.69 16.22 7.77L19.58 4.62C17.45 2.76 14.97 1.75 12 1.75C7.62 1.75 3.83 4.11 1.88 7.97L5.76 10.64C6.65 8.04 9.12 6.13 12 6.13Z" fill="#EA4335"></path>
+</svg>
+                    Continue with Google
+                </button>
+</div>
+</div>
+</div>
+</body></html>
