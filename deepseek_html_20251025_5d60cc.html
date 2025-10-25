@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDC-Dev - Transformando Ideias em Realidade Digital</title>
+    
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #7f13ec;
+            --primary-dark: #6a0fc4;
+            --primary-light: #9d4edd;
+            --black: #191022;
+            --dark-gray: #261933;
+            --medium-gray: #362348;
+            --light-gray: #4d3267;
+            --text-light: #ad92c9;
+            --white: #FFFFFF;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --neon-glow: 0 0 20px rgba(127, 19, 236, 0.4);
+            --glass-bg: rgba(38, 25, 51, 0.8);
+        }
+
+        .glass-effect {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--medium-gray);
+        }
+
+        .neon-glow {
+            box-shadow: var(--neon-glow);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--black) 0%, var(--dark-gray) 100%);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(127, 19, 236, 0.4);
+        }
+
+        .plan-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--dark-gray), var(--black));
+            border: 2px solid var(--medium-gray);
+        }
+
+        .plan-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .feature-card {
+            transition: all 0.3s ease;
+            background: rgba(38, 25, 51, 0.6);
+            border: 1px solid var(--medium-gray);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-light);
+            box-shadow: 0 5px 15px rgba(127, 19, 236, 0.3);
+        }
+
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--dark-gray);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--light-gray);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            z-index: 3000;
+            animation: toastSlideIn 0.3s ease;
+        }
+
+        @keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen font-['Space_Grotesk']">
+    
+    <!-- Header Navigation -->
+    <header class="header fixed top-0 left-0 right-0 glass-effect border-b border-[#362348] z-50">
+        <nav class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-[#7f13ec] to-[#9d4edd] rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">TD</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">TDC-Dev</span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home" class="text-[#ad92c9] hover:text-white transition-colors">Home</a>
+                    <a href="#about" class="text-[#ad92c9] hover:text-white transition-colors">Sobre</a>
+                    <a href="#offers" class="text-[#ad92c9] hover:text-white transition-colors">Ofertas</a>
+                    <a href="#plans" class="text-[#ad92c9] hover:text-white transition-colors">Planos</a>
+                    <a href="#discord" class="text-[#ad92c9] hover:text-white transition-colors">Discord</a>
+                    <a href="#tokens" class="text-[#ad92c9] hover:text-white transition-colors">Tokens</a>
+                </div>
+
+                <!-- Auth Buttons -->
+                <div class="hidden md:flex items-center space-x-4" id="authButtons">
+                    <button onclick="openModal('loginModal')" class="text-[#ad92c9] hover:text-white transition-colors">
+                        Login
+                    </button>
+                    <button onclick="openModal('registerModal')" class="btn-primary px-6 py-2 rounded-lg text-white font-semibold">
+                        Começar Agora
+                    </button>
+                </div>
+
+                <!-- User Menu (Logado) -->
+                <div class="hidden md:flex items-center space-x-4" id="userMenu">
+                    <span class="text-[#ad92c9]" id="userEmail"></span>
+                    <button onclick="openModal('adminPanel')" class="text-[#ad92c9] hover:text-white transition-colors" id="adminBtn" style="display: none;">
+                        Painel Admin
+                    </button>
+                    <button onclick="logout()" class="text-[#ad92c9] hover:text-white transition-colors">
+                        Sair
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button class="md:hidden text-white" onclick="toggleMobileMenu()">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu fixed top-0 left-0 h-full w-64 gradient-bg border-r border-[#362348] z-40 md:hidden">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-[#7f13ec] to-[#9d4edd] rounded-lg"></div>
+                    <span class="text-white font-bold">TDC-Dev</span>
+                </div>
+                <button onclick="toggleMobileMenu()" class="text-[#ad92c9]">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <a href="#home" class="block text-[#ad92c9] hover:text-white transition-colors" onclick="toggleMobileMenu()">Home</a>
+                <a href="#about" class="block text-[#ad92c9] hover:text-white transition-colors" onclick="toggleMobileMenu()">Sobre</a>
+                <a href="#offers" class="block text-[#ad92c9] hover:text-white transition-colors" onclick="toggleMobileMenu()">Ofertas</a>
+                <a href="#plans" class="block text-[#ad92c9] hover:text-white transition-colors" onclick="toggleMobileMenu()">Planos</a>
+                <a href="#discord" class="block text-[#ad92c9] hover:text-white transition-colors" onclick="toggleMobileMenu()">Discord</a>
+                <a href="#tokens" class="block text-[#ad92c9] hover:text-white transition-colors" onclick="toggleMobileMenu()">Tokens</a>
+                
+                <div class="pt-4 border-t border-[#362348] space-y-3">
+                    <button onclick="openModal('loginModal'); toggleMobileMenu()" class="w-full text-left text-[#ad92c9] hover:text-white transition-colors">
+                        Login
+                    </button>
+                    <button onclick="openModal('registerModal'); toggleMobileMenu()" class="w-full btn-primary px-4 py-2 rounded-lg text-white font-semibold text-center">
+                        Começar Agora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-20">
+        <!-- Hero Section -->
+        <section id="home" class="min-h-screen flex items-center justify-center relative overflow-hidden">
+            <!-- Background Effects -->
+            <div class="absolute inset-0">
+                <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-[#7f13ec] rounded-full blur-3xl opacity-20 animate-pulse"></div>
+                <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#9d4edd] rounded-full blur-3xl opacity-20 animate-pulse"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 text-center relative z-10">
+                <h1 class="text-5xl md:text-7xl font-black text-white mb-6 fade-in">
+                    Transforme Suas Ideias em
+                    <span class="bg-gradient-to-r from-[#7f13ec] to-[#9d4edd] bg-clip-text text-transparent">
+                        Realidade Digital
+                    </span>
+                </h1>
+                
+                <p class="text-xl md:text-2xl text-[#ad92c9] mb-8 max-w-3xl mx-auto fade-in">
+                    Criamos websites de alta performance que capturam sua visão e impulsionam seu negócio. 
+                    Vamos construir o futuro da sua marca juntos.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 fade-in">
+                    <button onclick="openModal('registerModal')" class="btn-primary px-8 py-4 rounded-xl text-white font-bold text-lg">
+                        Começar Meu Projeto
+                    </button>
+                    <button onclick="scrollToSection('plans')" class="glass-effect px-8 py-4 rounded-xl text-white font-bold text-lg border border-[#362348] hover:border-[#7f13ec] transition-colors">
+                        Ver Planos
+                    </button>
+                </div>
+
+                <!-- Social Proof -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto fade-in">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-white">150+</div>
+                        <div class="text-[#ad92c9]">Projetos Entregues</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-white">98%</div>
+                        <div class="text-[#ad92c9]">Clientes Satisfeitos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-white">24/7</div>
+                        <div class="text-[#ad92c9]">Suporte Especializado</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20">
+            <div class="container mx-auto px-4">
+                <h2 class="text-4xl md:text-5xl font-black text-white text-center mb-4">
+                    Por Que Escolher a <span class="text-[#7f13ec]">TDC-Dev</span>?
+                </h2>
+                <p class="text-xl text-[#ad92c9] text-center mb-12 max-w-3xl mx-auto">
+                    Combinamos design inovador, tecnologia de ponta e suporte dedicado para impulsionar o seu sucesso online.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="feature-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-[#7f13ec] rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-white">rocket_launch</span>
+                        </div>
+                        <h3 class="text-white font-bold text-lg mb-2">Tecnologia de Ponta</h3>
+                        <p class="text-[#ad92c9]">Utilizamos as mais recentes tecnologias para sites rápidos, seguros e escaláveis.</p>
+                    </div>
+
+                    <div class="feature-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-[#7f13ec] rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-white">support_agent</span>
+                        </div>
+                        <h3 class="text-white font-bold text-lg mb-2">Suporte 24/7</h3>
+                        <p class="text-[#ad92c9]">Oferecemos suporte ágil e humanizado para garantir que seu site esteja sempre no ar.</p>
+                    </div>
+
+                    <div class="feature-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-[#7f13ec] rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-white">trending_up</span>
+                        </div>
+                        <h3 class="text-white font-bold text-lg mb-2">Resultados Garantidos</h3>
+                        <p class="text-[#ad92c9]">Nosso foco é no seu sucesso com aumento significativo nas conversões.</p>
+                    </div>
+
+                    <div class="feature-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-[#7f13ec] rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-white">flash_on</span>
+                        </div>
+                        <h3 class="text-white font-bold text-lg mb-2">Agilidade na Entrega</h3>
+                        <p class="text-[#ad92c9]">Processos otimizados para entrega rápida sem comprometer a qualidade.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ofertas Especiais -->
+        <section id="offers" class="py-20 bg-[#1a1122]">
+            <div class="container mx-auto px-4">
+                <h2 class="text-4xl md:text-5xl font-black text-white text-center mb-4">
+                    🔥 <span class="text-[#7f13ec]">Ofertas Especiais</span> 🔥
+                </h2>
+                <p class="text-xl text-[#ad92c9] text-center mb-12">
+                    Comece seu projeto com nossas ofertas imperdíveis
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                    <!-- Oferta Básica -->
+                    <div class="plan-card rounded-3xl p-8 relative">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold text-white mb-2">SITE BÁSICO</h3>
+                            <div class="flex items-baseline justify-center gap-2">
+                                <span class="text-5xl font-black text-white">R$ 50</span>
+                                <span class="text-[#ad92c9]">/mês</span>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Domínio Personalizado
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Hospedagem Inclusa
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Design Responsivo
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#6B7280] mr-3">cancel</span>
+                                SEO Avançado
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#6B7280] mr-3">cancel</span>
+                                Suporte Prioritário
+                            </li>
+                        </ul>
+
+                        <button onclick="showOfferPopup('básico')" class="w-full glass-effect py-3 rounded-xl text-white font-semibold hover:bg-[#362348] transition-colors">
+                            Quero Este!
+                        </button>
+                    </div>
+
+                    <!-- Oferta Premium -->
+                    <div class="plan-card rounded-3xl p-8 relative border-2 border-[#7f13ec] neon-glow">
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-[#7f13ec] text-white px-4 py-1 rounded-full text-sm font-bold">
+                                MAIS POPULAR
+                            </span>
+                        </div>
+                        
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold text-white mb-2">SITE PREMIUM</h3>
+                            <div class="flex items-baseline justify-center gap-2">
+                                <span class="text-5xl font-black text-[#7f13ec]">R$ 100</span>
+                                <span class="text-[#ad92c9]">/mês</span>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Domínio Personalizado
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Hospedagem Inclusa
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Design Responsivo
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                SEO Avançado
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Suporte Prioritário
+                            </li>
+                        </ul>
+
+                        <button onclick="showOfferPopup('premium')" class="w-full btn-primary py-3 rounded-xl text-white font-semibold">
+                            Assinar Agora
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Planos Mensais -->
+        <section id="plans" class="py-20">
+            <div class="container mx-auto px-4">
+                <h2 class="text-4xl md:text-5xl font-black text-white text-center mb-4">
+                    Planos <span class="text-[#7f13ec]">Mensais</span>
+                </h2>
+                <p class="text-xl text-[#ad92c9] text-center mb-12">
+                    Escolha o plano perfeito para suas necessidades
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <!-- Plano Básico -->
+                    <div class="plan-card rounded-3xl p-8">
+                        <h3 class="text-2xl font-bold text-white mb-4">Básico</h3>
+                        <div class="flex items-baseline gap-2 mb-6">
+                            <span class="text-4xl font-black text-white">R$ 149,90</span>
+                            <span class="text-[#ad92c9]">/mês</span>
+                        </div>
+                        
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Site estático HTML/CSS/JS
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Design responsivo
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                4 seções personalizáveis
+                            </li>
+                        </ul>
+
+                        <button onclick="showPlanPopup('básico')" class="w-full glass-effect py-3 rounded-xl text-white font-semibold">
+                            Começar
+                        </button>
+                    </div>
+
+                    <!-- Plano Pro -->
+                    <div class="plan-card rounded-3xl p-8 border-2 border-[#7f13ec] neon-glow transform scale-105">
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-[#7f13ec] text-white px-4 py-1 rounded-full text-sm font-bold">
+                                RECOMENDADO
+                            </span>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold text-white mb-4">Pro</h3>
+                        <div class="flex items-baseline gap-2 mb-6">
+                            <span class="text-4xl font-black text-white">R$ 299,90</span>
+                            <span class="text-[#ad92c9]">/mês</span>
+                        </div>
+                        
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Design totalmente personalizado
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Layout único
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                6-8 seções
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Suporte prioritário por chat
+                            </li>
+                        </ul>
+
+                        <button onclick="showPlanPopup('pro')" class="w-full btn-primary py-3 rounded-xl text-white font-semibold">
+                            Assinar o Pro
+                        </button>
+                    </div>
+
+                    <!-- Plano Premium -->
+                    <div class="plan-card rounded-3xl p-8">
+                        <h3 class="text-2xl font-bold text-white mb-4">Premium</h3>
+                        <div class="flex items-baseline gap-2 mb-6">
+                            <span class="text-4xl font-black text-white">R$ 499,90</span>
+                            <span class="text-[#ad92c9]">/mês</span>
+                        </div>
+                        
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Sistema completo de login
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Banco de dados Firebase
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Painel administrativo
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Suporte 24/7
+                            </li>
+                            <li class="flex items-center text-[#ad92c9]">
+                                <span class="material-symbols-outlined text-[#10B981] mr-3">check_circle</span>
+                                Recursos exclusivos
+                            </li>
+                        </ul>
+
+                        <button onclick="showPlanPopup('premium')" class="w-full glass-effect py-3 rounded-xl text-white font-semibold">
+                            Contatar Vendas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Discord Section -->
+        <section id="discord" class="py-20 bg-[#1a1122]">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">
+                    Junte-se à Nossa <span class="text-[#7f13ec]">Comunidade</span>
+                </h2>
+                <p class="text-xl text-[#ad92c9] mb-12 max-w-2xl mx-auto">
+                    Conecte-se com outros profissionais, receba suporte instantâneo e acesse conteúdo exclusivo no Discord.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+                    <div class="feature-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-[#5865F2] rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-white">support_agent</span>
+                        </div>
+                        <h3 class="text-white font-bold text-lg mb-2">Suporte Imediato</h3>
+                        <p class="text-[#ad92c9]">Receba ajuda rapidamente da nossa equipe e comunidade.</p>
+                    </div>
+
+                    <div class="feature-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-[#5865F2] rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-white">groups</span>
+                        </div>
+                        <h3 class="text-white font-bold text-lg mb-2">Networking</h3>
+                        <p class="text-[#ad92c9]">Conecte-se com outros profissionais da sua área.</p>
+                    </div>
+
+                    <div class="feature-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-[#5865F2] rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-white">tips_and_updates</span>
+                        </div>
+                        <h3 class="text-white font-bold text-lg mb-2">Dicas Exclusivas</h3>
+                        <p class="text-[#ad92c9]">Acesso a guias e conteúdos que não compartilhamos em outros lugares.</p>
+                    </div>
+                </div>
+
+                <button onclick="openDiscord()" class="bg-[#5865F2] hover:bg-[#4752c4] px-8 py-4 rounded-xl text-white font-bold text-lg transition-colors">
+                    Entrar no Discord
+                </button>
+            </div>
+        </section>
+
+        <!-- Token Section -->
+        <section id="tokens" class="py-20">
+            <div class="container mx-auto px-4">
+                <h2 class="text-4xl md:text-5xl font-black text-white text-center mb-4">
+                    Sistema de <span class="text-[#7f13ec]">Tokens</span>
+                </h2>
+                <p class="text-xl text-[#ad92c9] text-center mb-12">
+                    Resgate seu token para ativar seu plano e acessar todos os benefícios
+                </p>
+
+                <div class="max-w-2xl mx-auto glass-effect rounded-3xl p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-white mb-4">Resgatar Token</h3>
+                        <p class="text-[#ad92c9]">Insira o código do seu token abaixo para ativar seu plano</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <input type="text" id="tokenInput" placeholder="Digite seu token aqui..." 
+                               class="w-full bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white placeholder-[#ad92c9] focus:border-[#7f13ec] focus:outline-none">
+                        
+                        <button onclick="redeemToken()" class="w-full btn-primary py-3 rounded-xl text-white font-semibold">
+                            Resgatar Token
+                        </button>
+                    </div>
+
+                    <div class="mt-8 p-4 bg-[#261933] rounded-xl">
+                        <h4 class="text-white font-bold mb-3">Como obter um token?</h4>
+                        <div class="space-y-2 text-[#ad92c9] text-sm">
+                            <p>1. Compre seu plano via Discord</p>
+                            <p>2. Receba o token por mensagem direta</p>
+                            <p>3. Cole o token acima e ative seu plano</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#1a1122] border-t border-[#362348] py-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center items-center space-x-3 mb-6">
+                <div class="w-8 h-8 bg-gradient-to-r from-[#7f13ec] to-[#9d4edd] rounded-lg"></div>
+                <span class="text-white font-bold text-xl">TDC-Dev</span>
+            </div>
+            
+            <p class="text-[#ad92c9] mb-6">
+                Transformando ideias em realidade digital desde 2024
+            </p>
+            
+            <div class="flex justify-center space-x-6 text-[#ad92c9]">
+                <a href="#" class="hover:text-white transition-colors">Termos</a>
+                <a href="#" class="hover:text-white transition-colors">Privacidade</a>
+                <a href="#" class="hover:text-white transition-colors">Contato</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODALS -->
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content glass-effect rounded-3xl p-8 max-w-md w-full">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-white mb-2">Bem-vindo de volta</h2>
+                    <p class="text-[#ad92c9]">Faça login para continuar na sua jornada futurista</p>
+                </div>
+
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="text-white block mb-2">Email</label>
+                        <input type="email" id="loginEmail" required
+                               class="w-full bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white placeholder-[#ad92c9] focus:border-[#7f13ec] focus:outline-none"
+                               placeholder="seu@email.com">
+                    </div>
+
+                    <div>
+                        <label class="text-white block mb-2">Senha</label>
+                        <input type="password" id="loginPassword" required
+                               class="w-full bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white placeholder-[#ad92c9] focus:border-[#7f13ec] focus:outline-none"
+                               placeholder="Sua senha">
+                    </div>
+
+                    <button type="submit" class="w-full btn-primary py-3 rounded-xl text-white font-semibold">
+                        Entrar
+                    </button>
+                </form>
+
+                <div class="flex items-center my-6">
+                    <div class="flex-1 border-t border-[#362348]"></div>
+                    <span class="px-4 text-[#ad92c9]">OU</span>
+                    <div class="flex-1 border-t border-[#362348]"></div>
+                </div>
+
+                <button onclick="loginWithGoogle()" class="w-full glass-effect border border-[#362348] py-3 rounded-xl text-white font-semibold flex items-center justify-center space-x-2 hover:bg-[#362348] transition-colors">
+                    <span>Entrar com Google</span>
+                </button>
+
+                <p class="text-center text-[#ad92c9] mt-6">
+                    Não tem uma conta? 
+                    <button onclick="closeModal('loginModal'); openModal('registerModal')" class="text-[#7f13ec] hover:underline">
+                        Cadastre-se
+                    </button>
+                </p>
+
+                <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-[#ad92c9] hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content glass-effect rounded-3xl p-8 max-w-md w-full">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-white mb-2">Crie sua Conta</h2>
+                    <p class="text-[#ad92c9]">Junte-se a nós para começar sua jornada</p>
+                </div>
+
+                <form id="registerForm" class="space-y-4">
+                    <div>
+                        <label class="text-white block mb-2">Nome de usuário</label>
+                        <input type="text" id="registerName" required
+                               class="w-full bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white placeholder-[#ad92c9] focus:border-[#7f13ec] focus:outline-none"
+                               placeholder="Digite seu nome de usuário">
+                    </div>
+
+                    <div>
+                        <label class="text-white block mb-2">Email</label>
+                        <input type="email" id="registerEmail" required
+                               class="w-full bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white placeholder-[#ad92c9] focus:border-[#7f13ec] focus:outline-none"
+                               placeholder="seu@email.com">
+                    </div>
+
+                    <div>
+                        <label class="text-white block mb-2">Senha</label>
+                        <input type="password" id="registerPassword" required
+                               class="w-full bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white placeholder-[#ad92c9] focus:border-[#7f13ec] focus:outline-none"
+                               placeholder="Digite sua senha">
+                    </div>
+
+                    <div>
+                        <label class="text-white block mb-2">Confirmar senha</label>
+                        <input type="password" id="registerConfirmPassword" required
+                               class="w-full bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white placeholder-[#ad92c9] focus:border-[#7f13ec] focus:outline-none"
+                               placeholder="Confirme sua senha">
+                    </div>
+
+                    <button type="submit" class="w-full btn-primary py-3 rounded-xl text-white font-semibold">
+                        Registrar
+                    </button>
+                </form>
+
+                <div class="flex items-center my-6">
+                    <div class="flex-1 border-t border-[#362348]"></div>
+                    <span class="px-4 text-[#ad92c9]">OU</span>
+                    <div class="flex-1 border-t border-[#362348]"></div>
+                </div>
+
+                <button onclick="registerWithGoogle()" class="w-full glass-effect border border-[#362348] py-3 rounded-xl text-white font-semibold flex items-center justify-center space-x-2 hover:bg-[#362348] transition-colors">
+                    <span>Registrar com Google</span>
+                </button>
+
+                <p class="text-center text-[#ad92c9] mt-6">
+                    Já tem uma conta? 
+                    <button onclick="closeModal('registerModal'); openModal('loginModal')" class="text-[#7f13ec] hover:underline">
+                        Faça login
+                    </button>
+                </p>
+
+                <button onclick="closeModal('registerModal')" class="absolute top-4 right-4 text-[#ad92c9] hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="modal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content glass-effect rounded-3xl p-8 max-w-md w-full text-center">
+                <h2 class="text-3xl font-black text-white mb-4">Bem-vindo(a) à TDC-Dev!</h2>
+                <p class="text-[#ad92c9] mb-6">Estamos felizes em tê-lo conosco. Transformamos suas ideias em realidade digital...</p>
+
+                <div class="mb-6">
+                    <div class="w-32 h-32 mx-auto border-2 border-dashed border-[#7f13ec] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#362348] transition-colors">
+                        <span class="material-symbols-outlined text-[#7f13ec] text-4xl">photo_camera</span>
+                    </div>
+                    <p class="text-[#ad92c9] mt-2">Adicione uma foto de perfil</p>
+                </div>
+
+                <p class="text-[#ad92c9] mb-6">Vamos começar personalizando seu perfil...</p>
+
+                <div class="space-y-3">
+                    <button class="w-full glass-effect border border-[#362348] py-3 rounded-xl text-white font-semibold hover:bg-[#362348] transition-colors">
+                        Fazer Upload
+                    </button>
+                    <button onclick="closeModal('welcomeModal')" class="w-full btn-primary py-3 rounded-xl text-white font-semibold">
+                        Explorar a Plataforma
+                    </button>
+                </div>
+
+                <button class="text-[#7f13ec] hover:underline mt-4">
+                    Pular por enquanto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminPanel" class="modal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content glass-effect rounded-3xl p-8 max-w-4xl w-full">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-black text-white">Painel Administrativo</h2>
+                    <button onclick="closeModal('adminPanel')" class="text-[#ad92c9] hover:text-white">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-effect rounded-xl p-6 text-center">
+                        <div class="text-3xl font-bold text-white mb-2">150</div>
+                        <div class="text-[#ad92c9]">Total Usuários</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-6 text-center">
+                        <div class="text-3xl font-bold text-white mb-2">89</div>
+                        <div class="text-[#ad92c9]">Tokens Ativos</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-6 text-center">
+                        <div class="text-3xl font-bold text-white mb-2">R$ 15.830</div>
+                        <div class="text-[#ad92c9]">Faturamento (Mês)</div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">Gerar Novo Token</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <select class="bg-[#261933] border border-[#362348] rounded-xl px-4 py-3 text-white focus:border-[#7f13ec] focus:outline-none">
+                                <option>Selecione um plano</option>
+                                <option>Básico</option>
+                                <option>Pro</option>
+                                <option>Premium</option>
+                            </select>
+                            <button class="btn-primary py-3 rounded-xl text-white font-semibold">
+                                Gerar Token
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">Tokens Recentes</h3>
+                        <div class="glass-effect rounded-xl p-4">
+                            <div class="text-[#ad92c9] text-center py-8">
+                                Nenhum token gerado recentemente
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="glass-effect rounded-2xl p-8 text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-white">Carregando...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+    <script>
+        // UI Functions
+        function toggleMobileMenu() {
+            document.querySelector('.mobile-menu').classList.toggle('open');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showOfferPopup(offerType) {
+            showToast(`Interesse registrado no plano ${offerType}! Entraremos em contato.`, 'success');
+        }
+
+        function showPlanPopup(planType) {
+            showToast(`Ótima escolha! Redirecionando para o plano ${planType}...`, 'success');
+        }
+
+        function openDiscord() {
+            window.open('https://discord.gg/tdc-dev', '_blank');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let modal of modals) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
