@@ -1,0 +1,3985 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TDC-Dev - Transformando Ideias em Realidade Digital</title>
+    
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    
+    <style>
+        /* ===== VARIÁVEIS E RESET ===== */
+        :root {
+            --primary: #7f13ec;
+            --primary-dark: #6a0fc4;
+            --primary-light: #9d4edd;
+            --primary-gradient: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            --black: #191022;
+            --dark-gray: #1a1525;
+            --medium-gray: #2a2438;
+            --light-gray: #3a3348;
+            --text-light: #ad92c9;
+            --white: #FFFFFF;
+            --glass-bg: rgba(38, 25, 51, 0.8);
+            --glass-border: rgba(77, 50, 103, 0.3);
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --neon-glow: 0 0 20px rgba(127, 19, 236, 0.5);
+            --neon-glow-strong: 0 0 40px rgba(127, 19, 236, 0.7);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --shadow-strong: 0 10px 40px rgba(0, 0, 0, 0.5);
+            --sidebar-width: 280px;
+            --border-radius: 16px;
+            --border-radius-sm: 12px;
+            --border-radius-lg: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            overflow-x: hidden;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            touch-action: pan-y;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* ===== SCROLLBAR PERSONALIZADA ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-gray);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-light);
+        }
+
+        /* ===== UTILITÁRIOS ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-badge {
+            display: inline-block;
+            background: rgba(127, 19, 236, 0.2);
+            color: var(--primary);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(25, 16, 34, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .header.scrolled {
+            background: rgba(25, 16, 34, 0.98);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--primary-gradient);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--white);
+            box-shadow: var(--neon-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--primary-light), var(--primary));
+            border-radius: calc(var(--border-radius-sm) + 2px);
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--white);
+            background: linear-gradient(135deg, var(--white), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--white);
+            background: rgba(127, 19, 236, 0.1);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 1rem;
+            right: 1rem;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* ===== USER MENU ===== */
+        .user-menu-container {
+            position: relative;
+        }
+
+        .user-menu-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(127, 19, 236, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .user-menu-trigger:hover {
+            background: rgba(127, 19, 236, 0.2);
+            border-color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--white);
+            border: 2px solid var(--primary-light);
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--white);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            min-width: 220px;
+            box-shadow: var(--shadow-strong);
+            display: none;
+            z-index: 1001;
+            backdrop-filter: blur(20px);
+        }
+
+        .user-dropdown.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--white);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--glass-border);
+            margin: 0.5rem 0;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        /* ===== BOTÕES ===== */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.4s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: var(--white);
+            box-shadow: var(--neon-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--neon-glow-strong);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--white);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-google {
+            background: var(--white);
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-google:hover {
+            background: #f5f5f5;
+            transform: translateY(-2px);
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* ===== MOBILE MENU ===== */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: rgba(127, 19, 236, 0.1);
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black);
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .mobile-nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid transparent;
+        }
+
+        .mobile-nav-link:hover {
+            background: var(--dark-gray);
+            color: var(--white);
+            border-color: var(--glass-border);
+        }
+
+        .mobile-auth-buttons {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .mobile-user-menu {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--dark-gray);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--glass-border);
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .mobile-user-action {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .mobile-user-action:hover {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .mobile-user-action.logout {
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .mobile-user-action.logout:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: var(--black);
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(127, 19, 236, 0.15) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -55%) scale(1.05); }
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .hero-badge {
+            margin-bottom: 2rem;
+        }
+
+        .badge-text {
+            display: inline-block;
+            background: rgba(127, 19, 236, 0.2);
+            color: var(--primary);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--neon-glow);
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* ===== FEATURES SECTION ===== */
+        .features {
+            background: var(--dark-gray);
+            padding: 6rem 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, var(--dark-gray), var(--black));
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem 2rem;
+            transition: all 0.4s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(127, 19, 236, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(127, 19, 236, 0.1);
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(127, 19, 236, 0.2);
+            transform: scale(1.1);
+        }
+
+        .feature-icon .material-symbols-outlined {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .feature-description {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            text-align: left;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: var(--text-light);
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* ===== OFFERS SECTION ===== */
+        .offers {
+            background: var(--black);
+            padding: 6rem 0;
+        }
+
+        .offers-banner {
+            background: var(--primary-gradient);
+            padding: 3rem;
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            margin-bottom: 4rem;
+            box-shadow: var(--neon-glow-strong);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .offers-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .offers-banner-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .offers-banner h2 {
+            color: var(--white);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        .offers-banner p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .countdown-item {
+            text-align: center;
+        }
+
+        .countdown-number {
+            display: block;
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            font-size: 1.5rem;
+            font-weight: 700;
+            min-width: 60px;
+            backdrop-filter: blur(10px);
+        }
+
+        .countdown-label {
+            display: block;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .offer-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .offer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .offer-card.featured {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: var(--neon-glow);
+        }
+
+        .offer-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .offer-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .offer-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            z-index: 1;
+        }
+
+        .offer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .offer-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .offer-discount {
+            background: var(--success);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .offer-price {
+            margin-bottom: 0.5rem;
+        }
+
+        .price-old {
+            color: var(--text-light);
+            text-decoration: line-through;
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .price-new {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--white);
+        }
+
+        .offer-period {
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .offer-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .offer-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .offer-features li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-available {
+            color: var(--text-light);
+        }
+
+        .feature-available .material-symbols-outlined {
+            color: var(--success);
+        }
+
+        .feature-unavailable {
+            color: var(--text-light);
+            opacity: 0.5;
+        }
+
+        .feature-unavailable .material-symbols-outlined {
+            color: var(--danger);
+        }
+
+        /* ===== PRICING SECTION ===== */
+        .pricing {
+            background: var(--dark-gray);
+            padding: 6rem 0;
+        }
+
+        .pricing-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .switch-label {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--medium-gray);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background: var(--white);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .discount-badge {
+            background: var(--success);
+            color: var(--white);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            background: linear-gradient(135deg, var(--dark-gray), var(--black));
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem 2rem;
+            transition: all 0.4s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            background: linear-gradient(135deg, var(--dark-gray), rgba(127, 19, 236, 0.1));
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: var(--neon-glow);
+        }
+
+        .pricing-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .pricing-description {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .pricing-price {
+            margin-bottom: 2rem;
+        }
+
+        .price-amount {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--white);
+            line-height: 1;
+        }
+
+        .price-period {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 2.5rem;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            padding: 0.75rem 0;
+            color: var(--text-light);
+            position: relative;
+            padding-left: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* ===== CONTACT SECTION ===== */
+        .contact {
+            background: var(--black);
+            padding: 6rem 0;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .contact-method {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--dark-gray);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .contact-method:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(127, 19, 236, 0.1);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .contact-icon .material-symbols-outlined {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .contact-details h3 {
+            color: var(--white);
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .contact-details p {
+            color: var(--text-light);
+        }
+
+        .contact-form {
+            background: var(--dark-gray);
+            padding: 2.5rem;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--glass-border);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: var(--black);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(127, 19, 236, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--dark-gray);
+            padding: 4rem 0 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-description {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: var(--medium-gray);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateY(-3px);
+        }
+
+        .footer-heading {
+            color: var(--white);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+            padding-left: 5px;
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .footer-legal {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-legal a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-legal a:hover {
+            color: var(--primary);
+        }
+
+        /* ===== MODAIS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--dark-gray);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--glass-border);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--primary);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* ===== PROFILE MODAL ===== */
+        .profile-avatar-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            border: 3px solid var(--primary-light);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: var(--neon-glow);
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-avatar-placeholder {
+            font-size: 2.5rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .profile-avatar-edit {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--white);
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .profile-avatar:hover .profile-avatar-edit {
+            opacity: 1;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-email {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-role {
+            display: inline-block;
+            background: rgba(127, 19, 236, 0.2);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-stat {
+            text-align: center;
+            padding: 1rem;
+            background: var(--black);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+        }
+
+        .profile-stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+
+        .profile-stat-label {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        /* ===== IMAGE EDITOR MODAL ===== */
+        .image-editor {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .editor-preview {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            margin: 0 auto 2rem;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            position: relative;
+            background: var(--black);
+        }
+
+        .editor-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .editor-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .editor-slider {
+            width: 100%;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        /* ===== ADMIN PANEL ===== */
+        .admin-panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: var(--dark-gray);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1002;
+            transition: right 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .admin-panel.open {
+            right: 0;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--glass-border);
+            background: var(--black);
+        }
+
+        .admin-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .admin-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+        }
+
+        .admin-close:hover {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--primary);
+        }
+
+        .admin-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .admin-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .admin-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-stat {
+            background: var(--black);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .admin-stat:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .admin-stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .admin-list {
+            list-style: none;
+        }
+
+        .admin-list li {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .admin-list li:last-child {
+            border-bottom: none;
+        }
+
+        .admin-list li:hover {
+            background: rgba(127, 19, 236, 0.05);
+        }
+
+        .admin-list-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(127, 19, 236, 0.1);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-list-icon .material-symbols-outlined {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .admin-list-content {
+            flex: 1;
+        }
+
+        .admin-list-title {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .admin-list-description {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        .admin-list-badge {
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .admin-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .admin-action {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--black);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .admin-action:hover {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .admin-action.danger {
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .admin-action.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* ===== ADMIN DASHBOARD ===== */
+        .admin-dashboard {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black);
+            z-index: 1003;
+            display: none;
+            overflow: hidden;
+        }
+
+        .admin-dashboard.active {
+            display: block;
+        }
+
+        .admin-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: var(--dark-gray);
+            border-right: 1px solid var(--glass-border);
+            padding: 2rem 0;
+            overflow-y: auto;
+            z-index: 1004;
+        }
+
+        .admin-main {
+            margin-left: 280px;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .admin-nav-header {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 2rem;
+        }
+
+        .admin-nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-nav-links {
+            list-style: none;
+        }
+
+        .admin-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .admin-nav-link:hover,
+        .admin-nav-link.active {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--white);
+            border-left-color: var(--primary);
+        }
+
+        .admin-nav-link .material-symbols-outlined {
+            font-size: 1.2rem;
+        }
+
+        .admin-content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .admin-content-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-card {
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .admin-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: var(--neon-glow);
+        }
+
+        .admin-card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .admin-card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .admin-table th {
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .admin-table td {
+            color: var(--white);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-suspended {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .admin-search {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-search-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .admin-search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .admin-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-filter {
+            padding: 0.75rem 1.5rem;
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-filter:hover,
+        .admin-filter.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        /* ===== TOKEN MANAGEMENT ===== */
+        .token-generator {
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .token-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .token-result {
+            background: var(--black);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .token-code {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+            font-family: monospace;
+        }
+
+        /* ===== PRICE CONFIGURATION ===== */
+        .price-config {
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+        }
+
+        .plan-card {
+            background: var(--black);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .plan-price-input {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .price-input {
+            padding: 0.75rem 1rem;
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+            width: 120px;
+        }
+
+        /* ===== RESPONSIVIDADE ===== */
+        @media (max-width: 1024px) {
+            .section-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-title {
+                font-size: 3rem;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+            }
+
+            .admin-sidebar {
+                width: 250px;
+            }
+
+            .admin-main {
+                margin-left: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .hero-buttons .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+            
+            .features-grid,
+            .offers-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .footer-legal {
+                justify-content: center;
+            }
+            
+            .admin-panel {
+                max-width: 100%;
+            }
+
+            .admin-sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .admin-sidebar.active {
+                transform: translateX(0);
+            }
+
+            .admin-main {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .token-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .hero-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .modal {
+                width: 95%;
+            }
+            
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding: 1.5rem;
+            }
+
+            .admin-content-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .admin-filters {
+                flex-direction: column;
+            }
+        }
+
+        /* ===== ANIMAÇÕES ===== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.6s ease;
+        }
+
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.6s ease;
+        }
+
+        .slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .zoom-in {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.6s ease;
+        }
+
+        .zoom-in.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .stagger-children > * {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .stagger-children.visible > * {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stagger-children.visible > *:nth-child(1) { transition-delay: 0.1s; }
+        .stagger-children.visible > *:nth-child(2) { transition-delay: 0.2s; }
+        .stagger-children.visible > *:nth-child(3) { transition-delay: 0.3s; }
+        .stagger-children.visible > *:nth-child(4) { transition-delay: 0.4s; }
+        .stagger-children.visible > *:nth-child(5) { transition-delay: 0.5s; }
+        .stagger-children.visible > *:nth-child(6) { transition-delay: 0.6s; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">TD</div>
+                <div class="logo-text">TDC-Dev</div>
+            </a>
+
+            <nav class="nav-links">
+                <a href="#home" class="nav-link active">Início</a>
+                <a href="#features" class="nav-link">Serviços</a>
+                <a href="#offers" class="nav-link">Ofertas</a>
+                <a href="#pricing" class="nav-link">Planos</a>
+                <a href="#contact" class="nav-link">Contato</a>
+            </nav>
+
+            <div class="auth-buttons">
+                <div class="user-menu-container" id="userMenuContainer" style="display: none;">
+                    <div class="user-menu-trigger" id="userMenuTrigger">
+                        <div class="user-avatar" id="userAvatar">
+                            <span class="profile-avatar-placeholder" id="avatarPlaceholder">U</span>
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name" id="userName">Usuário</div>
+                            <div class="user-email" id="userEmail">user@example.com</div>
+                        </div>
+                        <span class="material-symbols-outlined">expand_more</span>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="profileBtn">
+                            <span class="material-symbols-outlined">person</span>
+                            Meu Perfil
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <span class="material-symbols-outlined">dashboard</span>
+                            Dashboard
+                            <span class="badge">Novo</span>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <span class="material-symbols-outlined">settings</span>
+                            Configurações
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="adminPanelBtn">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                            Painel Admin
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="logoutBtn">
+                            <span class="material-symbols-outlined">logout</span>
+                            Sair
+                        </a>
+                    </div>
+                </div>
+
+                <button class="btn btn-outline" id="loginBtn" style="display: flex;">
+                    <span class="material-symbols-outlined">login</span>
+                    Entrar
+                </button>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <a href="#" class="logo">
+                <div class="logo-icon">TD</div>
+                <div class="logo-text">TDC-Dev</div>
+            </a>
+            <button class="mobile-menu-btn" id="mobileMenuClose">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="mobile-nav-links">
+            <a href="#home" class="mobile-nav-link">
+                <span class="material-symbols-outlined">home</span>
+                Início
+            </a>
+            <a href="#features" class="mobile-nav-link">
+                <span class="material-symbols-outlined">design_services</span>
+                Serviços
+            </a>
+            <a href="#offers" class="mobile-nav-link">
+                <span class="material-symbols-outlined">local_offer</span>
+                Ofertas
+            </a>
+            <a href="#pricing" class="mobile-nav-link">
+                <span class="material-symbols-outlined">payments</span>
+                Planos
+            </a>
+            <a href="#contact" class="mobile-nav-link">
+                <span class="material-symbols-outlined">contact_support</span>
+                Contato
+            </a>
+        </div>
+
+        <div class="mobile-auth-buttons" id="mobileAuthButtons">
+            <button class="btn btn-primary btn-large" id="mobileLoginBtn">
+                <span class="material-symbols-outlined">login</span>
+                Entrar na Conta
+            </button>
+        </div>
+
+        <div class="mobile-user-menu" id="mobileUserMenu" style="display: none;">
+            <div class="mobile-user-info">
+                <div class="user-avatar" id="mobileUserAvatar">
+                    <span class="profile-avatar-placeholder" id="mobileAvatarPlaceholder">U</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="mobileUserName">Usuário</div>
+                    <div class="user-email" id="mobileUserEmail">user@example.com</div>
+                </div>
+            </div>
+            <div class="mobile-user-actions">
+                <button class="mobile-user-action" id="mobileProfileBtn">
+                    <span class="material-symbols-outlined">person</span>
+                    Meu Perfil
+                </button>
+                <button class="mobile-user-action">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </button>
+                <button class="mobile-user-action">
+                    <span class="material-symbols-outlined">settings</span>
+                    Configurações
+                </button>
+                <button class="mobile-user-action" id="mobileAdminPanelBtn">
+                    <span class="material-symbols-outlined">admin_panel_settings</span>
+                    Painel Admin
+                </button>
+                <button class="mobile-user-action logout" id="mobileLogoutBtn">
+                    <span class="material-symbols-outlined">logout</span>
+                    Sair
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-background">
+            <div class="hero-glow"></div>
+        </div>
+        <div class="container hero-content">
+            <div class="hero-badge">
+                <span class="badge-text">Transformando Ideias em Realidade Digital</span>
+            </div>
+            <h1 class="hero-title">
+                Desenvolvimento Web & Mobile de <span class="text-gradient">Alto Impacto</span>
+            </h1>
+            <p class="hero-subtitle">
+                Criamos soluções digitais inovadoras que impulsionam negócios e superam expectativas. 
+                Da concepção à implementação, entregamos excelência em cada projeto.
+            </p>
+            <div class="hero-buttons">
+                <a href="#contact" class="btn btn-primary btn-large">
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    Começar Projeto
+                </a>
+                <a href="#features" class="btn btn-outline btn-large">
+                    <span class="material-symbols-outlined">visibility</span>
+                    Ver Serviços
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <span class="stat-number" id="projectsCount">150+</span>
+                    <span class="stat-label">Projetos Entregues</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="clientsCount">80+</span>
+                    <span class="stat-label">Clientes Satisfeitos</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="experienceCount">5+</span>
+                    <span class="stat-label">Anos de Experiência</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Nossos Serviços</span>
+                <h2 class="section-title">Soluções Completas para o Seu Negócio</h2>
+                <p class="section-subtitle">
+                    Oferecemos um portfólio abrangente de serviços digitais para atender todas as necessidades do seu negócio
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">code</span>
+                    </div>
+                    <h3 class="feature-title">Desenvolvimento Web</h3>
+                    <p class="feature-description">
+                        Sites institucionais, landing pages, e-commerces e sistemas web personalizados com as melhores tecnologias do mercado.
+                    </p>
+                    <ul class="feature-list">
+                        <li>React, Vue.js e Angular</li>
+                        <li>Node.js, PHP e Python</li>
+                        <li>Bancos de dados SQL e NoSQL</li>
+                        <li>APIs RESTful e GraphQL</li>
+                        <li>SEO e Performance Otimizada</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">smartphone</span>
+                    </div>
+                    <h3 class="feature-title">Apps Mobile</h3>
+                    <p class="feature-description">
+                        Aplicativos nativos e híbridos para iOS e Android, com designs intuitivos e performance excepcional.
+                    </p>
+                    <ul class="feature-list">
+                        <li>React Native e Flutter</li>
+                        <li>iOS Swift e Android Kotlin</li>
+                        <li>UI/UX Design especializado</li>
+                        <li>Integração com APIs</li>
+                        <li>Publicação nas lojas</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">palette</span>
+                    </div>
+                    <h3 class="feature-title">UI/UX Design</h3>
+                    <p class="feature-description">
+                        Interfaces modernas e experiências de usuário memoráveis que convertem visitantes em clientes.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Design System completo</li>
+                        <li>Prototipação interativa</li>
+                        <li>Testes de usabilidade</li>
+                        <li>Identidade visual</li>
+                        <li>Design responsivo</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Offers Section -->
+    <section class="offers" id="offers">
+        <div class="container">
+            <div class="offers-banner">
+                <div class="offers-banner-content">
+                    <span class="banner-badge">Oferta Especial por Tempo Limitado</span>
+                    <h2>Desconto de 30% em Todos os Planos</h2>
+                    <p>Aproveite nossa promoção de lançamento e transforme seu negócio com soluções premium</p>
+                    <div class="countdown" id="countdown">
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="days">00</span>
+                            <span class="countdown-label">Dias</span>
+                        </div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="hours">00</span>
+                            <span class="countdown-label">Horas</span>
+                        </div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="minutes">00</span>
+                            <span class="countdown-label">Minutos</span>
+                        </div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="seconds">00</span>
+                            <span class="countdown-label">Segundos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <span class="section-badge">Ofertas Exclusivas</span>
+                <h2 class="section-title">Pacotes Completos para Seu Projeto</h2>
+                <p class="section-subtitle">
+                    Soluções personalizadas que atendem desde startups até grandes empresas
+                </p>
+            </div>
+
+            <div class="offers-grid">
+                <div class="offer-card">
+                    <div class="offer-badge">Mais Popular</div>
+                    <div class="offer-header">
+                        <h3 class="offer-name">Startup Package</h3>
+                        <span class="offer-discount">-30%</span>
+                    </div>
+                    <div class="offer-price">
+                        <span class="price-old">R$ 4.999</span>
+                        <span class="price-new">R$ 3.499</span>
+                    </div>
+                    <div class="offer-period">Projeto único</div>
+                    <ul class="offer-features">
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Site institucional responsivo
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Design personalizado
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Integração com redes sociais
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Formulário de contato
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            SEO básico
+                        </li>
+                        <li class="feature-unavailable">
+                            <span class="material-symbols-outlined">cancel</span>
+                            E-commerce completo
+                        </li>
+                        <li class="feature-unavailable">
+                            <span class="material-symbols-outlined">cancel</span>
+                            App mobile
+                        </li>
+                    </ul>
+                    <button class="btn btn-primary btn-large" style="width: 100%;">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        Contratar Agora
+                    </button>
+                </div>
+
+                <div class="offer-card featured">
+                    <div class="offer-badge">Recomendado</div>
+                    <div class="offer-header">
+                        <h3 class="offer-name">Business Package</h3>
+                        <span class="offer-discount">-30%</span>
+                    </div>
+                    <div class="offer-price">
+                        <span class="price-old">R$ 9.999</span>
+                        <span class="price-new">R$ 6.999</span>
+                    </div>
+                    <div class="offer-period">Projeto único</div>
+                    <ul class="offer-features">
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Site institucional premium
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Design exclusivo
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            E-commerce básico
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Sistema de gestão
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            SEO avançado
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            App mobile básico
+                        </li>
+                        <li class="feature-unavailable">
+                            <span class="material-symbols-outlined">cancel</span>
+                            Sistema complexo personalizado
+                        </li>
+                    </ul>
+                    <button class="btn btn-primary btn-large" style="width: 100%;">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        Contratar Agora
+                    </button>
+                </div>
+
+                <div class="offer-card">
+                    <div class="offer-badge">Enterprise</div>
+                    <div class="offer-header">
+                        <h3 class="offer-name">Enterprise Package</h3>
+                        <span class="offer-discount">-30%</span>
+                    </div>
+                    <div class="offer-price">
+                        <span class="price-old">R$ 19.999</span>
+                        <span class="price-new">R$ 13.999</span>
+                    </div>
+                    <div class="offer-period">Projeto único</div>
+                    <ul class="offer-features">
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Solução completa personalizada
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            E-commerce avançado
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            App mobile nativo
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Sistema de gestão completo
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Integração com APIs
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Suporte 24/7
+                        </li>
+                        <li class="feature-available">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Treinamento da equipe
+                        </li>
+                    </ul>
+                    <button class="btn btn-primary btn-large" style="width: 100%;">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        Contratar Agora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Planos Mensais</span>
+                <h2 class="section-title">Soluções Contínuas para Seu Negócio</h2>
+                <p class="section-subtitle">
+                    Escolha o plano que melhor se adapta às necessidades do seu negócio
+                </p>
+            </div>
+
+            <div class="pricing-switch">
+                <span class="switch-label">Mensal</span>
+                <label class="switch">
+                    <input type="checkbox" id="billingToggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="switch-label">Anual <span class="discount-badge">-20%</span></span>
+            </div>
+
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3 class="pricing-name">Básico</h3>
+                    <p class="pricing-description">
+                        Ideal para pequenos negócios e profissionais autônomos
+                    </p>
+                    <div class="pricing-price">
+                        <span class="price-amount" id="basicPrice">R$ 299</span>
+                        <span class="price-period" id="basicPeriod">/mês</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>Site responsivo</li>
+                        <li>5 páginas</li>
+                        <li>Formulário de contato</li>
+                        <li>SEO básico</li>
+                        <li>Suporte por email</li>
+                        <li>Atualizações mensais</li>
+                    </ul>
+                    <button class="btn btn-outline btn-large" style="width: 100%;">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        Escolher Plano
+                    </button>
+                </div>
+
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Mais Popular</div>
+                    <h3 class="pricing-name">Profissional</h3>
+                    <p class="pricing-description">
+                        Perfeito para empresas em crescimento
+                    </p>
+                    <div class="pricing-price">
+                        <span class="price-amount" id="proPrice">R$ 599</span>
+                        <span class="price-period" id="proPeriod">/mês</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>Site premium responsivo</li>
+                        <li>15 páginas</li>
+                        <li>E-commerce básico</li>
+                        <li>SEO avançado</li>
+                        <li>Suporte prioritário</li>
+                        <li>Atualizações semanais</li>
+                        <li>Relatórios mensais</li>
+                        <li>Integração com redes sociais</li>
+                    </ul>
+                    <button class="btn btn-primary btn-large" style="width: 100%;">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        Escolher Plano
+                    </button>
+                </div>
+
+                <div class="pricing-card">
+                    <h3 class="pricing-name">Enterprise</h3>
+                    <p class="pricing-description">
+                        Solução completa para grandes empresas
+                    </p>
+                    <div class="pricing-price">
+                        <span class="price-amount" id="enterprisePrice">R$ 1.299</span>
+                        <span class="price-period" id="enterprisePeriod">/mês</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>Solução completa personalizada</li>
+                        <li>Páginas ilimitadas</li>
+                        <li>E-commerce avançado</li>
+                        <li>App mobile</li>
+                        <li>Suporte 24/7</li>
+                        <li>Atualizações diárias</li>
+                        <li>Relatórios em tempo real</li>
+                        <li>Consultoria estratégica</li>
+                        <li>Treinamento da equipe</li>
+                    </ul>
+                    <button class="btn btn-outline btn-large" style="width: 100%;">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        Escolher Plano
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Vamos Conversar</span>
+                <h2 class="section-title">Pronto para Transformar Seu Negócio?</h2>
+                <p class="section-subtitle">
+                    Entre em contato conosco e vamos discutir como podemos ajudar seu negócio a crescer
+                </p>
+            </div>
+
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <span class="material-symbols-outlined">mail</span>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Email</h3>
+                            <p>contato@tdcdev.com.br</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <span class="material-symbols-outlined">call</span>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Telefone</h3>
+                            <p>(11) 99999-9999</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <span class="material-symbols-outlined">location_on</span>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Escritório</h3>
+                            <p>Av. Paulista, 1000 - São Paulo, SP</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <span class="material-symbols-outlined">schedule</span>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Horário de Atendimento</h3>
+                            <p>Segunda a Sexta: 9h às 18h</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-form">
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label class="form-label" for="name">Nome Completo</label>
+                            <input type="text" id="name" class="form-input" placeholder="Seu nome completo" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Telefone</label>
+                            <input type="tel" id="phone" class="form-input" placeholder="(11) 99999-9999" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="service">Serviço de Interesse</label>
+                            <select id="service" class="form-input" required>
+                                <option value="">Selecione um serviço</option>
+                                <option value="web">Desenvolvimento Web</option>
+                                <option value="mobile">Apps Mobile</option>
+                                <option value="design">UI/UX Design</option>
+                                <option value="consulting">Consultoria</option>
+                                <option value="other">Outro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="message">Mensagem</label>
+                            <textarea id="message" class="form-input form-textarea" placeholder="Descreva seu projeto ou dúvida..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+                            <span class="material-symbols-outlined">send</span>
+                            Enviar Mensagem
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <div class="logo-icon">TD</div>
+                        <div class="logo-text">TDC-Dev</div>
+                    </div>
+                    <p class="footer-description">
+                        Transformamos ideias em realidade digital através de soluções inovadoras e tecnologia de ponta. 
+                        Somos especialistas em desenvolvimento web, mobile e design de interfaces.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">facebook</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">instagram</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">linkedin</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">twitter</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-services">
+                    <h3 class="footer-heading">Serviços</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Desenvolvimento Web</a></li>
+                        <li><a href="#">Apps Mobile</a></li>
+                        <li><a href="#">UI/UX Design</a></li>
+                        <li><a href="#">E-commerce</a></li>
+                        <li><a href="#">Consultoria</a></li>
+                    </ul>
+                </div>
+                <div class="footer-company">
+                    <h3 class="footer-heading">Empresa</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Sobre Nós</a></li>
+                        <li><a href="#">Portfólio</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Carreiras</a></li>
+                        <li><a href="#">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="footer-support">
+                    <h3 class="footer-heading">Suporte</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Documentação</a></li>
+                        <li><a href="#">Política de Privacidade</a></li>
+                        <li><a href="#">Termos de Uso</a></li>
+                        <li><a href="#">Status do Sistema</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    &copy; 2024 TDC-Dev. Todos os direitos reservados.
+                </div>
+                <div class="footer-legal">
+                    <a href="#">Privacidade</a>
+                    <a href="#">Termos</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Meu Perfil</h3>
+                <button class="modal-close" id="profileModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar" id="modalAvatar">
+                        <span class="profile-avatar-placeholder" id="modalAvatarPlaceholder">U</span>
+                        <div class="profile-avatar-edit">Alterar Foto</div>
+                    </div>
+                    <h2 class="profile-name" id="modalUserName">Usuário</h2>
+                    <p class="profile-email" id="modalUserEmail">user@example.com</p>
+                    <span class="profile-role" id="modalUserRole">Cliente</span>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <span class="profile-stat-number" id="modalProjects">5</span>
+                        <span class="profile-stat-label">Projetos</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="profile-stat-number" id="modalSince">2024</span>
+                        <span class="profile-stat-label">Cliente desde</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="profileName">Nome Completo</label>
+                    <input type="text" id="profileName" class="form-input" placeholder="Seu nome completo">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="profilePhone">Telefone</label>
+                    <input type="tel" id="profilePhone" class="form-input" placeholder="(11) 99999-9999">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="profileCompany">Empresa</label>
+                    <input type="text" id="profileCompany" class="form-input" placeholder="Sua empresa">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="profileCancelBtn">Cancelar</button>
+                <button class="btn btn-primary" id="profileSaveBtn">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Editor Modal -->
+    <div class="modal-overlay" id="imageEditorModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Foto de Perfil</h3>
+                <button class="modal-close" id="imageEditorModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="image-editor">
+                    <div class="editor-preview">
+                        <img id="editorImage" src="" alt="Preview">
+                    </div>
+                    <div class="editor-controls">
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                        <button class="btn btn-outline" id="uploadImageBtn" style="width: 100%; margin-bottom: 1rem;">
+                            <span class="material-symbols-outlined">photo_library</span>
+                            Escolher da Galeria
+                        </button>
+                        <div class="form-group">
+                            <label class="form-label">Zoom</label>
+                            <input type="range" class="editor-slider" id="zoomSlider" min="1" max="3" step="0.1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rotação</label>
+                            <input type="range" class="editor-slider" id="rotateSlider" min="0" max="360" step="1" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="editorCancelBtn">Cancelar</button>
+                <button class="btn btn-primary" id="editorSaveBtn">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Entrar na Conta</h3>
+                <button class="modal-close" id="loginModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="seu@email.com" value="admin@tdcdev.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Senha</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Sua senha" value="admin123">
+                </div>
+                <div style="text-align: center; margin: 1.5rem 0;">
+                    <span style="color: var(--text-light);">ou</span>
+                </div>
+                <button class="btn btn-google btn-large" style="width: 100%; margin-bottom: 1rem;">
+                    <span class="material-symbols-outlined">google</span>
+                    Continuar com Google
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="loginCancelBtn">Cancelar</button>
+                <button class="btn btn-primary" id="loginSubmitBtn">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-header">
+            <h3 class="admin-title">Painel Administrativo</h3>
+            <button class="admin-close" id="adminPanelClose">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="admin-content">
+            <div class="admin-section">
+                <h4 class="admin-section-title">Visão Geral</h4>
+                <div class="admin-stats">
+                    <div class="admin-stat">
+                        <span class="admin-stat-number" id="adminTotalUsers">152</span>
+                        <span class="admin-stat-label">Usuários</span>
+                    </div>
+                    <div class="admin-stat">
+                        <span class="admin-stat-number" id="adminActiveProjects">24</span>
+                        <span class="admin-stat-label">Projetos Ativos</span>
+                    </div>
+                    <div class="admin-stat">
+                        <span class="admin-stat-number" id="adminMonthlyRevenue">R$ 42.5K</span>
+                        <span class="admin-stat-label">Receita Mensal</span>
+                    </div>
+                    <div class="admin-stat">
+                        <span class="admin-stat-number" id="adminSupportTickets">8</span>
+                        <span class="admin-stat-label">Tickets Abertos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h4 class="admin-section-title">Atividade Recente</h4>
+                <ul class="admin-list">
+                    <li>
+                        <div class="admin-list-icon">
+                            <span class="material-symbols-outlined">person_add</span>
+                        </div>
+                        <div class="admin-list-content">
+                            <div class="admin-list-title">Novo usuário registrado</div>
+                            <div class="admin-list-description">João Silva - há 2 minutos</div>
+                        </div>
+                        <span class="admin-list-badge">Novo</span>
+                    </li>
+                    <li>
+                        <div class="admin-list-icon">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                        </div>
+                        <div class="admin-list-content">
+                            <div class="admin-list-title">Novo projeto contratado</div>
+                            <div class="admin-list-description">Business Package - há 15 minutos</div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="admin-list-icon">
+                            <span class="material-symbols-outlined">assignment</span>
+                        </div>
+                        <div class="admin-list-content">
+                            <div class="admin-list-title">Projeto entregue</div>
+                            <div class="admin-list-description">Site TechSolutions - há 1 hora</div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="admin-list-icon">
+                            <span class="material-symbols-outlined">support_agent</span>
+                        </div>
+                        <div class="admin-list-content">
+                            <div class="admin-list-title">Ticket de suporte respondido</div>
+                            <div class="admin-list-description">#TS-4821 - há 3 horas</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="admin-section">
+                <h4 class="admin-section-title">Ações Rápidas</h4>
+                <div class="admin-actions">
+                    <button class="admin-action">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        Dashboard Completo
+                    </button>
+                    <button class="admin-action">
+                        <span class="material-symbols-outlined">group</span>
+                        Gerenciar Usuários
+                    </button>
+                    <button class="admin-action">
+                        <span class="material-symbols-outlined">inventory</span>
+                        Gerenciar Projetos
+                    </button>
+                    <button class="admin-action">
+                        <span class="material-symbols-outlined">payments</span>
+                        Relatórios Financeiros
+                    </button>
+                    <button class="admin-action">
+                        <span class="material-symbols-outlined">settings</span>
+                        Configurações do Sistema
+                    </button>
+                    <button class="admin-action danger">
+                        <span class="material-symbols-outlined">logout</span>
+                        Sair do Painel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-dashboard" id="adminDashboard">
+        <div class="admin-sidebar" id="adminSidebar">
+            <div class="admin-nav-header">
+                <div class="admin-nav-logo">
+                    <div class="logo-icon">TD</div>
+                    <div class="logo-text">TDC-Dev Admin</div>
+                </div>
+            </div>
+            <nav class="admin-nav-links">
+                <a href="#admin-dashboard" class="admin-nav-link active" data-section="dashboard">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="#admin-users" class="admin-nav-link" data-section="users">
+                    <span class="material-symbols-outlined">group</span>
+                    Gerenciar Usuários
+                </a>
+                <a href="#admin-requests" class="admin-nav-link" data-section="requests">
+                    <span class="material-symbols-outlined">assignment</span>
+                    Solicitações de Site
+                </a>
+                <a href="#admin-tokens" class="admin-nav-link" data-section="tokens">
+                    <span class="material-symbols-outlined">key</span>
+                    Gerenciar Tokens
+                </a>
+                <a href="#admin-pricing" class="admin-nav-link" data-section="pricing">
+                    <span class="material-symbols-outlined">payments</span>
+                    Configurar Preços
+                </a>
+                <a href="#admin-reports" class="admin-nav-link" data-section="reports">
+                    <span class="material-symbols-outlined">analytics</span>
+                    Relatórios
+                </a>
+                <a href="#admin-settings" class="admin-nav-link" data-section="settings">
+                    <span class="material-symbols-outlined">settings</span>
+                    Configurações
+                </a>
+            </nav>
+        </div>
+        <div class="admin-main" id="adminMain">
+            <!-- Dashboard Section -->
+            <div class="admin-section-content active" id="dashboard-section">
+                <div class="admin-content-header">
+                    <h1 class="admin-content-title">Dashboard Principal</h1>
+                    <div class="admin-search">
+                        <input type="text" class="admin-search-input" placeholder="Pesquisar...">
+                        <button class="btn btn-primary">
+                            <span class="material-symbols-outlined">search</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">Total Usuários</h3>
+                            <span class="material-symbols-outlined" style="color: var(--primary);">group</span>
+                        </div>
+                        <div class="admin-stat-number">1,428</div>
+                        <div class="admin-stat-label" style="color: var(--success);">+2.5% em relação ao mês anterior</div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">Tokens Ativos</h3>
+                            <span class="material-symbols-outlined" style="color: var(--primary);">key</span>
+                        </div>
+                        <div class="admin-stat-number">972</div>
+                        <div class="admin-stat-label" style="color: var(--success);">+1.8% em relação à semana anterior</div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">Faturamento (Mês)</h3>
+                            <span class="material-symbols-outlined" style="color: var(--primary);">payments</span>
+                        </div>
+                        <div class="admin-stat-number">R$ 15,830</div>
+                        <div class="admin-stat-label" style="color: var(--danger);">-0.5% em relação ao mês anterior</div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">Solicitações Pendentes</h3>
+                            <span class="material-symbols-outlined" style="color: var(--primary);">pending</span>
+                        </div>
+                        <div class="admin-stat-number">24</div>
+                        <div class="admin-stat-label" style="color: var(--warning);">+3 novas hoje</div>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3 class="admin-card-title">Tokens Gerados Recentemente</h3>
+                        <button class="btn btn-primary" id="generateTokenBtn">
+                            <span class="material-symbols-outlined">add</span>
+                            Gerar Novo Token
+                        </button>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Usuário</th>
+                                <th>Status</th>
+                                <th>Expira em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>f4a2...b8e1</td>
+                                <td>alice@example.com</td>
+                                <td><span class="status-badge status-active">Ativo</span></td>
+                                <td>30/12/2024</td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">content_copy</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>c9d3...a7f6</td>
+                                <td>bob@example.com</td>
+                                <td><span class="status-badge status-active">Ativo</span></td>
+                                <td>15/11/2024</td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">content_copy</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>e1b5...c4d9</td>
+                                <td>charlie@example.com</td>
+                                <td><span class="status-badge status-suspended">Expirado</span></td>
+                                <td>01/05/2024</td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">refresh</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div class="admin-section-content" id="users-section">
+                <div class="admin-content-header">
+                    <h1 class="admin-content-title">Gerenciamento de Usuários</h1>
+                    <div class="admin-search">
+                        <input type="text" class="admin-search-input" placeholder="Buscar por nome ou email...">
+                        <button class="btn btn-primary">
+                            <span class="material-symbols-outlined">search</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-filters">
+                    <button class="admin-filter active">Todos</button>
+                    <button class="admin-filter">Ativos</button>
+                    <button class="admin-filter">Suspensos</button>
+                    <button class="admin-filter">Pendentes</button>
+                </div>
+
+                <div class="admin-card">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>NOME</th>
+                                <th>EMAIL</th>
+                                <th>PLANO</th>
+                                <th>STATUS</th>
+                                <th>DATA DE REGISTRO</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ana Almeida</td>
+                                <td>ana.almeida@example.com</td>
+                                <td><strong>Premium</strong></td>
+                                <td><span class="status-badge status-active">Ativo</span></td>
+                                <td>2024-05-10</td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Bruno Costa</td>
+                                <td>bruno.costa@example.com</td>
+                                <td><strong>Básico</strong></td>
+                                <td><span class="status-badge status-suspended">Suspenso</span></td>
+                                <td>2024-04-22</td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Carla Silva</td>
+                                <td>carla.silva@example.com</td>
+                                <td><strong>Premium</strong></td>
+                                <td><span class="status-badge status-active">Ativo</span></td>
+                                <td>2024-03-15</td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Diogo Ribeiro</td>
+                                <td>diogo.ribeiro@example.com</td>
+                                <td><strong>Básico</strong></td>
+                                <td><span class="status-badge status-pending">Pendente</span></td>
+                                <td>2024-06-01</td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="padding: 1rem; text-align: center; color: var(--text-light);">
+                        Mostrando 1-4 de 150 usuários
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requests Section -->
+            <div class="admin-section-content" id="requests-section">
+                <div class="admin-content-header">
+                    <h1 class="admin-content-title">Gerenciamento de Solicitações de Site</h1>
+                    <div class="admin-search">
+                        <input type="text" class="admin-search-input" placeholder="Pesquisar por nome, plano ou tipo de site...">
+                        <button class="btn btn-primary">
+                            <span class="material-symbols-outlined">search</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-filters">
+                    <button class="admin-filter active">Todos</button>
+                    <button class="admin-filter">Pendentes</button>
+                    <button class="admin-filter">Em Andamento</button>
+                    <button class="admin-filter">Concluídos</button>
+                </div>
+
+                <div class="admin-card">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>NOME DO USUÁRIO</th>
+                                <th>PLANO</th>
+                                <th>TIPO DE SITE</th>
+                                <th>DATA DA SOLICITAÇÃO</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ana Oliveira</td>
+                                <td>Pro</td>
+                                <td>E-commerce de Moda</td>
+                                <td>20/07/2024</td>
+                                <td><span class="status-badge status-pending">Em Andamento</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">more_vert</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Bruno Costa</td>
+                                <td>Básico</td>
+                                <td>Portfolio Pessoal</td>
+                                <td>18/07/2024</td>
+                                <td><span class="status-badge status-pending">Pendente</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">more_vert</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Carla Dias</td>
+                                <td>Enterprise</td>
+                                <td>Plataforma SAAS</td>
+                                <td>15/07/2024</td>
+                                <td><span class="status-badge status-active">Concluído</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">more_vert</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Daniel Martins</td>
+                                <td>Pro</td>
+                                <td>Blog de Tecnologia</td>
+                                <td>12/07/2024</td>
+                                <td><span class="status-badge status-active">Concluído</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">more_vert</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Eduarda Souza</td>
+                                <td>Básico</td>
+                                <td>Site Institucional</td>
+                                <td>01/07/2024</td>
+                                <td><span class="status-badge status-pending">Pendente</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">more_vert</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="padding: 1rem; text-align: center; color: var(--text-light);">
+                        Mostrando 1 a 5 de 25 resultados
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tokens Section -->
+            <div class="admin-section-content" id="tokens-section">
+                <div class="admin-content-header">
+                    <h1 class="admin-content-title">Gerenciamento de Tokens</h1>
+                    <button class="btn btn-primary" id="generateTokenModalBtn">
+                        <span class="material-symbols-outlined">add</span>
+                        Gerar Novo Token
+                    </button>
+                </div>
+
+                <div class="token-generator">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--white);">Gerar Novo Token</h3>
+                    <form class="token-form" id="adminTokenForm">
+                        <div class="form-group">
+                            <label class="form-label">Nome do Token</label>
+                            <input type="text" class="form-input" placeholder="Ex: API de Marketing" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Token</label>
+                            <select class="form-input" required>
+                                <option value="">Selecionar Tipo</option>
+                                <option value="api">Acesso API</option>
+                                <option value="user">Convite de Usuário</option>
+                                <option value="premium">Acesso Premium</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data de Expiração</label>
+                            <input type="date" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Plano Associado</label>
+                            <select class="form-input" required>
+                                <option value="">Selecionar Plano</option>
+                                <option value="basic">Básico</option>
+                                <option value="pro">Profissional</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <span class="material-symbols-outlined">key</span>
+                                Gerar Token
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="token-result" id="adminTokenResult">
+                        <h4 style="color: var(--white); margin-bottom: 1rem;">Token Gerado com Sucesso!</h4>
+                        <div class="token-code" id="adminTokenCode">TDC-XXXX-XXXX-XXXX</div>
+                        <p style="color: var(--text-light); margin-bottom: 1rem;">Copie este token e compartilhe com o usuário</p>
+                        <button class="btn btn-outline" id="copyTokenBtn">
+                            <span class="material-symbols-outlined">content_copy</span>
+                            Copiar Token
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3 class="admin-card-title">Tokens Existentes</h3>
+                        <div class="admin-search">
+                            <input type="text" class="admin-search-input" placeholder="Pesquisar tokens...">
+                            <button class="btn btn-outline">
+                                <span class="material-symbols-outlined">search</span>
+                            </button>
+                        </div>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>NOME DO TOKEN</th>
+                                <th>TIPO</th>
+                                <th>DATA DE CRIAÇÃO</th>
+                                <th>DATA DE EXPIRAÇÃO</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>API de Marketing</td>
+                                <td>Acesso API</td>
+                                <td>2023-10-26</td>
+                                <td>2024-10-26</td>
+                                <td><span class="status-badge status-active">Ativo</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">content_copy</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Convite para Desenvolvedor</td>
+                                <td>Convite de Usuário</td>
+                                <td>2023-09-15</td>
+                                <td>2023-09-22</td>
+                                <td><span class="status-badge status-suspended">Expirado</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">refresh</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>API de Análise Antiga</td>
+                                <td>Acesso API</td>
+                                <td>2022-01-10</td>
+                                <td>N/A</td>
+                                <td><span class="status-badge status-suspended">Revogado</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pricing Section -->
+            <div class="admin-section-content" id="pricing-section">
+                <div class="admin-content-header">
+                    <h1 class="admin-content-title">Configurar Preços</h1>
+                    <p style="color: var(--text-light);">Ajuste os preços para seus planos de assinatura em tempo real.</p>
+                </div>
+
+                <div class="price-config">
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <h3 class="plan-name">Básico</h3>
+                            <div class="pricing-switch">
+                                <span class="switch-label">Mensal</span>
+                                <label class="switch">
+                                    <input type="checkbox" class="plan-toggle" data-plan="basic">
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="switch-label">Anual <span class="discount-badge">-20%</span></span>
+                            </div>
+                        </div>
+                        <div class="plan-price-input">
+                            <span style="color: var(--text-light);">R$</span>
+                            <input type="number" class="price-input" value="19" data-plan="basic-monthly">
+                            <span style="color: var(--text-light);">por mês, por usuário</span>
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="basic1" checked>
+                                <label class="form-check-label" for="basic1">Até 10 projetos</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="basic2" checked>
+                                <label class="form-check-label" for="basic2">5GB de armazenamento</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="basic3" checked>
+                                <label class="form-check-label" for="basic3">Suporte via E-mail</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <h3 class="plan-name">Profissional</h3>
+                            <div class="pricing-switch">
+                                <span class="switch-label">Mensal</span>
+                                <label class="switch">
+                                    <input type="checkbox" class="plan-toggle" data-plan="pro" checked>
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="switch-label">Anual <span class="discount-badge">-20%</span></span>
+                            </div>
+                        </div>
+                        <div class="plan-price-input">
+                            <span style="color: var(--text-light);">R$</span>
+                            <input type="number" class="price-input" value="49" data-plan="pro-monthly">
+                            <span style="color: var(--text-light);">por mês, por usuário</span>
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="pro1" checked>
+                                <label class="form-check-label" for="pro1">Projetos limitados</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="pro2" checked>
+                                <label class="form-check-label" for="pro2">50GB de armazenamento</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="pro3" checked>
+                                <label class="form-check-label" for="pro3">Análises Avançadas</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="pro4" checked>
+                                <label class="form-check-label" for="pro4">Suporte prioritário</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <h3 class="plan-name">Premium</h3>
+                            <div class="pricing-switch">
+                                <span class="switch-label">Mensal</span>
+                                <label class="switch">
+                                    <input type="checkbox" class="plan-toggle" data-plan="premium">
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="switch-label">Anual <span class="discount-badge">-20%</span></span>
+                            </div>
+                        </div>
+                        <div class="plan-price-input">
+                            <span style="color: var(--text-light);">R$</span>
+                            <input type="number" class="price-input" value="99" data-plan="premium-monthly">
+                            <span style="color: var(--text-light);">por mês, por usuário</span>
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="premium1" checked>
+                                <label class="form-check-label" for="premium1">Tudo do plano Pro</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="premium2" checked>
+                                <label class="form-check-label" for="premium2">Automações e API</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="premium3" checked>
+                                <label class="form-check-label" for="premium3">Suporte Dedicado 24/7</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button class="btn btn-outline">Descartar Alterações</button>
+                        <button class="btn btn-primary">Salvar Configurações</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div class="admin-section-content" id="reports-section">
+                <div class="admin-content-header">
+                    <h1 class="admin-content-title">Relatórios e Análises</h1>
+                    <p style="color: var(--text-light);">Visualize o desempenho da plataforma e obtenha insights valiosos.</p>
+                </div>
+
+                <div class="admin-filters">
+                    <button class="admin-filter active">Últimos 30 dias</button>
+                    <button class="admin-filter">Últimos 7 dias</button>
+                    <button class="admin-filter">Este mês</button>
+                    <button class="admin-filter">Personalizado</button>
+                </div>
+
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">Transações</h3>
+                            <span class="material-symbols-outlined" style="color: var(--primary);">receipt</span>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Usuário</th>
+                                    <th>Data</th>
+                                    <th>Plano</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#A64B1</td>
+                                    <td>ana.silva@email.com</td>
+                                    <td>28 Fev, 2024</td>
+                                    <td>Plano Pro</td>
+                                    <td>R$ 99.90</td>
+                                    <td><span class="status-badge status-active">Concluído</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#C23D5</td>
+                                    <td>carlos.souza@email.com</td>
+                                    <td>27 Fev, 2024</td>
+                                    <td>Plano Básico</td>
+                                    <td>R$ 29.90</td>
+                                    <td><span class="status-badge status-active">Concluído</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#F89E2</td>
+                                    <td>bruno.lima@email.com</td>
+                                    <td>27 Fev, 2024</td>
+                                    <td>Plano Enterprise</td>
+                                    <td>R$ 499.00</td>
+                                    <td><span class="status-badge status-pending">Pendente</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#B77A0</td>
+                                    <td>mariana.costa@email.com</td>
+                                    <td>28 Fev, 2024</td>
+                                    <td>Plano Pro</td>
+                                    <td>R$ 99.90</td>
+                                    <td><span class="status-badge status-suspended">Falhou</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">Métricas Principais</h3>
+                            <span class="material-symbols-outlined" style="color: var(--primary);">analytics</span>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
+                                <div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--white);">1,482</div>
+                                    <div style="color: var(--text-light); font-size: 0.9rem;">Todos</div>
+                                </div>
+                                <div style="color: var(--success); font-size: 0.9rem; font-weight: 600;">+2.5%</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
+                                <div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--white);">R$ 25.6K</div>
+                                    <div style="color: var(--text-light); font-size: 0.9rem;">Receita Mensal</div>
+                                </div>
+                                <div style="color: var(--success); font-size: 0.9rem; font-weight: 600;">+5.8%</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
+                                <div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--white);">890</div>
+                                    <div style="color: var(--text-light); font-size: 0.9rem;">Assinaturas Ativas</div>
+                                </div>
+                                <div style="color: var(--danger); font-size: 0.9rem; font-weight: 600;">-0.5%</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--white);">1.2M</div>
+                                    <div style="color: var(--text-light); font-size: 0.9rem;">Tokens Usados (mês)</div>
+                                </div>
+                                <div style="color: var(--success); font-size: 0.9rem; font-weight: 600;">+10.1%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
