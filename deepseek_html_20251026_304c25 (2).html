@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TDC-Dev - Transformando Ideias em Realidade Digital</title>
+    
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    
+    <style>
+        /* ===== VARIÁVEIS E RESET ===== */
+        :root {
+            --primary: #7f13ec;
+            --primary-dark: #6a0fc4;
+            --primary-light: #9d4edd;
+            --primary-gradient: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            --black: #191022;
+            --dark-gray: #1a1525;
+            --medium-gray: #2a2438;
+            --light-gray: #3a3348;
+            --text-light: #ad92c9;
+            --white: #FFFFFF;
+            --glass-bg: rgba(38, 25, 51, 0.8);
+            --glass-border: rgba(77, 50, 103, 0.3);
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --neon-glow: 0 0 20px rgba(127, 19, 236, 0.5);
+            --neon-glow-strong: 0 0 40px rgba(127, 19, 236, 0.7);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --shadow-strong: 0 10px 40px rgba(0, 0, 0, 0.5);
+            --sidebar-width: 280px;
+            --border-radius: 16px;
+            --border-radius-sm: 12px;
+            --border-radius-lg: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            overflow-x: hidden;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            touch-action: pan-y;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* ===== SCROLLBAR PERSONALIZADA ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-gray);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-light);
+        }
+
+        /* ===== UTILITÁRIOS ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-badge {
+            display: inline-block;
+            background: rgba(127, 19, 236, 0.2);
+            color: var(--primary);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ===== LOADING SCREEN ===== */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .logo-icon.large {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-gradient);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 2rem;
+            color: var(--white);
+            box-shadow: var(--neon-glow);
+            margin: 0 auto 1.5rem;
+        }
+
+        .loading-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--white), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(127, 19, 236, 0.3);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(25, 16, 34, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .header.scrolled {
+            background: rgba(25, 16, 34, 0.98);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--primary-gradient);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--white);
+            box-shadow: var(--neon-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--primary-light), var(--primary));
+            border-radius: calc(var(--border-radius-sm) + 2px);
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--white);
+            background: linear-gradient(135deg, var(--white), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--white);
+            background: rgba(127, 19, 236, 0.1);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 1rem;
+            right: 1rem;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* ===== USER MENU ===== */
+        .user-menu-container {
+            position: relative;
+        }
+
+        .user-menu-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(127, 19, 236, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .user-menu-trigger:hover {
+            background: rgba(127, 19, 236, 0.2);
+            border-color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--white);
+            border: 2px solid var(--primary-light);
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--white);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            min-width: 220px;
+            box-shadow: var(--shadow-strong);
+            display: none;
+            z-index: 1001;
+            backdrop-filter: blur(20px);
+        }
+
+        .user-dropdown.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--white);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--glass-border);
+            margin: 0.5rem 0;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        /* ===== BOTÕES ===== */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.4s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: var(--white);
+            box-shadow: var(--neon-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--neon-glow-strong);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--white);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-google {
+            background: var(--white);
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-google:hover {
+            background: #f5f5f5;
+            transform: translateY(-2px);
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* ===== MOBILE MENU ===== */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: rgba(127, 19, 236, 0.1);
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black);
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .mobile-nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid transparent;
+        }
+
+        .mobile-nav-link:hover {
+            background: var(--dark-gray);
+            color: var(--white);
+            border-color: var(--glass-border);
+        }
+
+        .mobile-auth-buttons {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .mobile-user-menu {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--dark-gray);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--glass-border);
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .mobile-user-action {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .mobile-user-action:hover {
+            background: rgba(127, 19, 236, 0.1);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .mobile-user-action.logout {
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .mobile-user-action.logout:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: var(--black);
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(127, 19, 236, 0.15) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -55%) scale(1.05); }
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .hero-badge {
+            margin-bottom: 2rem;
+        }
+
+        .badge-text {
+            display: inline-block;
+            background: rgba(127, 19, 236, 0.2);
+            color: var(--primary);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--neon-glow);
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* ===== FEATURES SECTION ===== */
+        .features {
+            background: var(--dark-gray);
+            padding: 6rem 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, var(--dark-gray), var(--black));
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem 2rem;
+            transition: all 0.4s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(127, 19, 236, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(127, 19, 236, 0.1);
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(127, 19, 236, 0.2);
+            transform: scale(1.1);
+        }
+
+        .feature-icon .material-symbols-outlined {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .feature-description {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            text-align: left;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: var(--text-light);
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* ===== OFFERS SECTION ===== */
+        .offers {
+            background: var(--black);
+            padding: 6rem 0;
+        }
+
+        .offers-banner {
+            background: var(--primary-gradient);
+            padding: 3rem;
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            margin-bottom: 4rem;
+            box-shadow: var(--neon-glow-strong);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .offers-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .offers-banner-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .offers-banner h2 {
+            color: var(--white);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        .offers-banner p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .countdown-item {
+            text-align: center;
+        }
+
+        .countdown-number {
+            display: block;
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            font-size: 1.5rem;
+            font-weight: 700;
+            min-width: 60px;
+            backdrop-filter: blur(10px);
+        }
+
+        .countdown-label {
+            display: block;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .offer-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .offer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .offer-card.featured {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: var(--neon-glow);
+        }
+
+        .offer-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .offer-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .offer-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            z-index: 1;
+        }
+
+        .offer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .offer-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .offer-discount {
+            background: var(--success);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .offer-price {
+            margin-bottom: 0.5rem;
+        }
+
+        .price-old {
+            color: var(--text-light);
+            text-decoration: line-through;
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .price-new {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--white);
+        }
+
+        .offer-period {
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .offer-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .offer-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .offer-features li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-available {
+            color: var(--text-light);
+        }
+
+        .feature-available .material-symbols-outlined {
+            color: var(--success);
+        }
+
+        .feature-unavailable {
+            color: var(--text-light);
+            opacity: 0.5;
+        }
+
+        .feature-unavailable .material-symbols-outlined {
+            color: var(--danger);
+        }
+
+        /* ===== PRICING SECTION ===== */
+        .pricing {
+            background: var(--dark-gray);
+            padding: 6rem 0;
+        }
+
+        .pricing-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .switch-label {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--medium-gray);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background: var(--white);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .discount-badge {
+            background: var(--success);
+            color: var(--white);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            background: linear-gradient(135deg, var(--dark-gray), var(--black));
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem 2rem;
+            transition: all 0.4s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            background: linear-gradient(135deg, var(--dark-gray), rgba(127, 19, 236, 0.1));
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: var(--neon-glow);
+        }
+
+        .pricing-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .pricing-description {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .pricing-price {
+            margin-bottom: 2rem;
+        }
+
+        .price-amount {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--white);
+            display: block;
+        }
+
+        .price-period {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 2.5rem;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        /* ===== FAQ SECTION ===== */
+        .faq {
+            background: var(--black);
+            padding: 6rem 0;
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: var(--dark-gray);
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active {
+            border-color: var(--primary);
+            box-shadow: var(--neon-glow);
+        }
+
+        .faq-question {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: rgba(127, 19, 236, 0.05);
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+            color: var(--primary);
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            padding: 0 2rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 2rem 1.5rem;
+            max-height: 500px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--dark-gray);
+            padding: 4rem 0 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-description {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(127, 19, 236, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: var(--neon-glow);
+        }
+
+        .footer-heading {
+            color: var(--white);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+            padding-left: 0.5rem;
+        }
+
+        .footer-newsletter {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .newsletter-text {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .newsletter-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .newsletter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-copyright {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .footer-legal {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-legal a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-legal a:hover {
+            color: var(--primary);
+        }
+
+        /* ===== MODAIS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--dark-gray);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-strong);
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            padding: 2rem 2rem 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 2rem 2rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* ===== FORMULÁRIOS ===== */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--white);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: var(--black);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(127, 19, 236, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-light);
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .input-with-icon .form-input {
+            padding-left: 3rem;
+        }
+
+        .form-helper {
+            color: var(--text-light);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .form-error {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .form-check-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .form-check-label a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .form-check-label a:hover {
+            text-decoration: underline;
+        }
+
+        .form-divider {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0;
+            color: var(--text-light);
+        }
+
+        .form-divider::before,
+        .form-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--glass-border);
+        }
+
+        .form-divider span {
+            padding: 0 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* ===== RESPONSIVIDADE ===== */
+        @media (max-width: 1024px) {
+            .section-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-title {
+                font-size: 3rem;
+            }
+            
+            .nav-links {
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .hero-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .auth-buttons {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .features-grid,
+            .offers-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .offer-card.featured {
+                transform: none;
+            }
+            
+            .offer-card.featured:hover {
+                transform: translateY(-10px);
+            }
+            
+            .pricing-card.featured {
+                transform: none;
+            }
+            
+            .pricing-card.featured:hover {
+                transform: translateY(-10px);
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-legal {
+                justify-content: center;
+            }
+            
+            .newsletter-form {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .modal {
+                width: 95%;
+                margin: 1rem;
+            }
+            
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding: 1.5rem;
+            }
+        }
+
+        /* ===== ANIMAÇÕES ===== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.6s ease;
+        }
+
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.6s ease;
+        }
+
+        .slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .zoom-in {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.6s ease;
+        }
+
+        .zoom-in.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .stagger-children > * {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .stagger-children.visible > * {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stagger-children.visible > *:nth-child(1) { transition-delay: 0.1s; }
+        .stagger-children.visible > *:nth-child(2) { transition-delay: 0.2s; }
+        .stagger-children.visible > *:nth-child(3) { transition-delay: 0.3s; }
+        .stagger-children.visible > *:nth-child(4) { transition-delay: 0.4s; }
+        .stagger-children.visible > *:nth-child(5) { transition-delay: 0.5s; }
+        .stagger-children.visible > *:nth-child(6) { transition-delay: 0.6s; }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="logo-icon large">TD</div>
+            <div class="loading-text">TDC-Dev</div>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">TD</div>
+                <div class="logo-text">TDC-Dev</div>
+            </a>
+
+            <nav class="nav-links">
+                <a href="#home" class="nav-link active">Início</a>
+                <a href="#features" class="nav-link">Recursos</a>
+                <a href="#offers" class="nav-link">Ofertas</a>
+                <a href="#pricing" class="nav-link">Planos</a>
+                <a href="#faq" class="nav-link">FAQ</a>
+            </nav>
+
+            <div class="auth-buttons">
+                <button class="btn btn-outline" id="loginBtn">Entrar</button>
+                <button class="btn btn-primary" id="registerBtn">Registrar</button>
+            </div>
+
+            <!-- User Menu (visível apenas quando logado) -->
+            <div class="user-menu-container" id="userMenuContainer" style="display: none;">
+                <div class="user-menu-trigger" id="userMenuTrigger">
+                    <div class="user-avatar" id="userAvatar">
+                        <span id="userInitials">U</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">Usuário</div>
+                        <div class="user-email" id="userEmail">usuario@exemplo.com</div>
+                    </div>
+                    <span class="material-symbols-outlined">expand_more</span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-item" id="profileBtn">
+                        <span class="material-symbols-outlined">person</span>
+                        Meu Perfil
+                    </div>
+                    <div class="dropdown-item" id="adminBtn" style="display: none;">
+                        <span class="material-symbols-outlined">admin_panel_settings</span>
+                        Painel Admin
+                        <span class="badge">Admin</span>
+                    </div>
+                    <div class="dropdown-item" id="tokenBtn">
+                        <span class="material-symbols-outlined">redeem</span>
+                        Resgatar Token
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" id="logoutBtn">
+                        <span class="material-symbols-outlined">logout</span>
+                        Sair
+                    </div>
+                </div>
+            </div>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <a href="#" class="logo">
+                <div class="logo-icon">TD</div>
+                <div class="logo-text">TDC-Dev</div>
+            </a>
+            <button class="mobile-menu-btn" id="mobileMenuCloseBtn">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <nav class="mobile-nav-links">
+            <a href="#home" class="mobile-nav-link">
+                <span class="material-symbols-outlined">home</span>
+                Início
+            </a>
+            <a href="#features" class="mobile-nav-link">
+                <span class="material-symbols-outlined">featured_seasonal_and_gifts</span>
+                Recursos
+            </a>
+            <a href="#offers" class="mobile-nav-link">
+                <span class="material-symbols-outlined">local_offer</span>
+                Ofertas
+            </a>
+            <a href="#pricing" class="mobile-nav-link">
+                <span class="material-symbols-outlined">payments</span>
+                Planos
+            </a>
+            <a href="#faq" class="mobile-nav-link">
+                <span class="material-symbols-outlined">help</span>
+                FAQ
+            </a>
+        </nav>
+
+        <div class="mobile-auth-buttons" id="mobileAuthButtons">
+            <button class="btn btn-outline" id="mobileLoginBtn">Entrar</button>
+            <button class="btn btn-primary" id="mobileRegisterBtn">Registrar</button>
+        </div>
+
+        <div class="mobile-user-menu" id="mobileUserMenu" style="display: none;">
+            <div class="mobile-user-info">
+                <div class="user-avatar" id="mobileUserAvatar">
+                    <span id="mobileUserInitials">U</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="mobileUserName">Usuário</div>
+                    <div class="user-email" id="mobileUserEmail">usuario@exemplo.com</div>
+                </div>
+            </div>
+            <div class="mobile-user-actions">
+                <button class="mobile-user-action" id="mobileProfileBtn">
+                    <span class="material-symbols-outlined">person</span>
+                    Meu Perfil
+                </button>
+                <button class="mobile-user-action" id="mobileAdminBtn" style="display: none;">
+                    <span class="material-symbols-outlined">admin_panel_settings</span>
+                    Painel Admin
+                </button>
+                <button class="mobile-user-action" id="mobileTokenBtn">
+                    <span class="material-symbols-outlined">redeem</span>
+                    Resgatar Token
+                </button>
+                <button class="mobile-user-action logout" id="mobileLogoutBtn">
+                    <span class="material-symbols-outlined">logout</span>
+                    Sair
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="hero-background">
+                <div class="hero-glow"></div>
+            </div>
+            <div class="container hero-content">
+                <div class="hero-badge">
+                    <span class="badge-text">✨ Transformando Ideias em Realidade Digital</span>
+                </div>
+                <h1 class="hero-title fade-in">
+                    Desenvolvimento <span class="text-gradient">Premium</span> para o Seu Sucesso
+                </h1>
+                <p class="hero-subtitle fade-in">
+                    Oferecemos soluções digitais completas com tecnologia de ponta, design inovador e suporte especializado para impulsionar seu negócio.
+                </p>
+                <div class="hero-buttons fade-in">
+                    <button class="btn btn-primary btn-large" id="heroRegisterBtn">
+                        Começar Agora
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                    <button class="btn btn-outline btn-large" id="heroLearnMoreBtn">
+                        Saiba Mais
+                    </button>
+                </div>
+                <div class="hero-stats stagger-children">
+                    <div class="stat-card">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">Projetos Concluídos</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">98%</span>
+                        <span class="stat-label">Satisfação do Cliente</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Suporte Especializado</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-badge">Recursos Exclusivos</div>
+                    <h2 class="section-title">Tudo que você precisa em um só lugar</h2>
+                    <p class="section-subtitle">
+                        Nossa plataforma oferece uma gama completa de recursos para impulsionar seu desenvolvimento digital
+                    </p>
+                </div>
+                <div class="features-grid stagger-children">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <span class="material-symbols-outlined">code</span>
+                        </div>
+                        <h3 class="feature-title">Desenvolvimento Full-Stack</h3>
+                        <p class="feature-description">
+                            Soluções completas de desenvolvimento web e mobile com as tecnologias mais modernas do mercado.
+                        </p>
+                        <ul class="feature-list">
+                            <li>Frontend React/Vue.js</li>
+                            <li>Backend Node.js/Python</li>
+                            <li>Banco de Dados Otimizado</li>
+                            <li>APIs RESTful</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <span class="material-symbols-outlined">palette</span>
+                        </div>
+                        <h3 class="feature-title">Design UX/UI Premium</h3>
+                        <p class="feature-description">
+                            Interfaces intuitivas e visualmente impressionantes que encantam usuários e aumentam conversões.
+                        </p>
+                        <ul class="feature-list">
+                            <li>Design Responsivo</li>
+                            <li>Prototipação Interativa</li>
+                            <li>Testes de Usabilidade</li>
+                            <li>Animações Personalizadas</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <span class="material-symbols-outlined">cloud</span>
+                        </div>
+                        <h3 class="feature-title">Hospedagem & Infraestrutura</h3>
+                        <p class="feature-description">
+                            Infraestrutura escalável e segura com alta disponibilidade e performance otimizada.
+                        </p>
+                        <ul class="feature-list">
+                            <li>Hospedagem Cloud</li>
+                            <li>CDN Global</li>
+                            <li>SSL Gratuito</li>
+                            <li>Backup Automático</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Offers Section -->
+        <section class="offers" id="offers">
+            <div class="container">
+                <div class="offers-banner">
+                    <div class="offers-banner-content">
+                        <div class="banner-badge">Oferta Especial por Tempo Limitado</div>
+                        <h2>Economize 40% no Plano Premium</h2>
+                        <p>Desbloqueie todos os recursos por um preço especial. Oferta válida apenas esta semana!</p>
+                        <div class="countdown">
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="days">03</span>
+                                <span class="countdown-label">Dias</span>
+                            </div>
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="hours">12</span>
+                                <span class="countdown-label">Horas</span>
+                            </div>
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="minutes">45</span>
+                                <span class="countdown-label">Minutos</span>
+                            </div>
+                            <div class="countdown-item">
+                                <span class="countdown-number" id="seconds">30</span>
+                                <span class="countdown-label">Segundos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <div class="section-badge">Planos em Destaque</div>
+                    <h2 class="section-title">Escolha o plano perfeito para você</h2>
+                    <p class="section-subtitle">
+                        Oferecemos soluções flexíveis que se adaptam ao seu orçamento e necessidades
+                    </p>
+                </div>
+
+                <div class="offers-grid stagger-children">
+                    <div class="offer-card">
+                        <div class="offer-badge">Popular</div>
+                        <div class="offer-header">
+                            <h3 class="offer-name">Plano Básico</h3>
+                            <div class="offer-discount">-20%</div>
+                        </div>
+                        <div class="offer-price">
+                            <span class="price-old">R$ 199</span>
+                            <span class="price-new">R$ 159</span>
+                        </div>
+                        <div class="offer-period">por mês</div>
+                        <ul class="offer-features">
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>5 Projetos Simultâneos</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Suporte por Email</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>10GB de Armazenamento</span>
+                            </li>
+                            <li class="feature-unavailable">
+                                <span class="material-symbols-outlined">close</span>
+                                <span>Domínio Personalizado</span>
+                            </li>
+                            <li class="feature-unavailable">
+                                <span class="material-symbols-outlined">close</span>
+                                <span>SSL Premium</span>
+                            </li>
+                        </ul>
+                        <button class="btn btn-primary btn-large" style="width: 100%;">Escolher Plano</button>
+                    </div>
+
+                    <div class="offer-card featured">
+                        <div class="offer-badge">Mais Popular</div>
+                        <div class="offer-header">
+                            <h3 class="offer-name">Plano Premium</h3>
+                            <div class="offer-discount">-40%</div>
+                        </div>
+                        <div class="offer-price">
+                            <span class="price-old">R$ 399</span>
+                            <span class="price-new">R$ 239</span>
+                        </div>
+                        <div class="offer-period">por mês</div>
+                        <ul class="offer-features">
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Projetos Ilimitados</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Suporte Prioritário 24/7</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>100GB de Armazenamento</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Domínio Personalizado</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>SSL Premium</span>
+                            </li>
+                        </ul>
+                        <button class="btn btn-primary btn-large" style="width: 100%; background: var(--primary-gradient); box-shadow: var(--neon-glow-strong);">
+                            Escolher Plano
+                        </button>
+                    </div>
+
+                    <div class="offer-card">
+                        <div class="offer-badge">Empresarial</div>
+                        <div class="offer-header">
+                            <h3 class="offer-name">Plano Enterprise</h3>
+                            <div class="offer-discount">-30%</div>
+                        </div>
+                        <div class="offer-price">
+                            <span class="price-old">R$ 799</span>
+                            <span class="price-new">R$ 559</span>
+                        </div>
+                        <div class="offer-period">por mês</div>
+                        <ul class="offer-features">
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Projetos Ilimitados</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Suporte Dedicado</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>1TB de Armazenamento</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Múltiplos Domínios</span>
+                            </li>
+                            <li class="feature-available">
+                                <span class="material-symbols-outlined">check</span>
+                                <span>SSL Enterprise</span>
+                            </li>
+                        </ul>
+                        <button class="btn btn-primary btn-large" style="width: 100%;">Escolher Plano</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section class="pricing" id="pricing">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-badge">Planos Flexíveis</div>
+                    <h2 class="section-title">Preços transparentes sem surpresas</h2>
+                    <p class="section-subtitle">
+                        Escolha entre pagamento mensal ou anual com desconto. Cancele a qualquer momento.
+                    </p>
+                </div>
+
+                <div class="pricing-switch">
+                    <span class="switch-label">Mensal</span>
+                    <label class="switch">
+                        <input type="checkbox" id="pricingToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="switch-label">Anual <span class="discount-badge">-20%</span></span>
+                </div>
+
+                <div class="pricing-grid stagger-children">
+                    <div class="pricing-card">
+                        <div class="pricing-name">Iniciante</div>
+                        <p class="pricing-description">Perfeito para freelancers e pequenos projetos</p>
+                        <div class="pricing-price">
+                            <span class="price-amount" id="starterPrice">R$ 99</span>
+                            <span class="price-period">por mês</span>
+                        </div>
+                        <ul class="pricing-features">
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>3 Projetos</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>5GB Armazenamento</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Suporte Básico</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">close</span>
+                                <span>Domínio Grátis</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">close</span>
+                                <span>SSL Premium</span>
+                            </li>
+                        </ul>
+                        <button class="btn btn-outline btn-large" style="width: 100%;">Começar Agora</button>
+                    </div>
+
+                    <div class="pricing-card featured">
+                        <div class="pricing-badge">Recomendado</div>
+                        <div class="pricing-name">Profissional</div>
+                        <p class="pricing-description">Ideal para agências e desenvolvedores experientes</p>
+                        <div class="pricing-price">
+                            <span class="price-amount" id="proPrice">R$ 199</span>
+                            <span class="price-period">por mês</span>
+                        </div>
+                        <ul class="pricing-features">
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>15 Projetos</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>50GB Armazenamento</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Suporte Prioritário</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Domínio Grátis</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>SSL Premium</span>
+                            </li>
+                        </ul>
+                        <button class="btn btn-primary btn-large" style="width: 100%;">Começar Agora</button>
+                    </div>
+
+                    <div class="pricing-card">
+                        <div class="pricing-name">Empresarial</div>
+                        <p class="pricing-description">Solução completa para grandes empresas</p>
+                        <div class="pricing-price">
+                            <span class="price-amount" id="enterprisePrice">R$ 499</span>
+                            <span class="price-period">por mês</span>
+                        </div>
+                        <ul class="pricing-features">
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Projetos Ilimitados</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>500GB Armazenamento</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Suporte 24/7</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>Domínios Ilimitados</span>
+                            </li>
+                            <li>
+                                <span class="material-symbols-outlined">check</span>
+                                <span>SSL Enterprise</span>
+                            </li>
+                        </ul>
+                        <button class="btn btn-outline btn-large" style="width: 100%;">Fale Conosco</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq" id="faq">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-badge">FAQ</div>
+                    <h2 class="section-title">Perguntas Frequentes</h2>
+                    <p class="section-subtitle">
+                        Encontre respostas para as dúvidas mais comuns sobre nossos serviços
+                    </p>
+                </div>
+
+                <div class="faq-container stagger-children">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Como funciona o processo de desenvolvimento?
+                            <span class="material-symbols-outlined faq-icon">expand_more</span>
+                        </div>
+                        <div class="faq-answer">
+                            Nosso processo é dividido em 4 etapas: 1) Análise e planejamento, 2) Design e prototipação, 
+                            3) Desenvolvimento e testes, 4) Lançamento e suporte. Trabalhamos com metodologias ágeis 
+                            para garantir transparência e entregas rápidas.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Quais tecnologias vocês utilizam?
+                            <span class="material-symbols-outlined faq-icon">expand_more</span>
+                        </div>
+                        <div class="faq-answer">
+                            Utilizamos as tecnologias mais modernas do mercado: React, Vue.js, Node.js, Python, 
+                            PostgreSQL, MongoDB, AWS, Docker e muito mais. Escolhemos a stack ideal para cada projeto 
+                            baseado em suas necessidades específicas.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Qual é o tempo médio de entrega?
+                            <span class="material-symbols-outlined faq-icon">expand_more</span>
+                        </div>
+                        <div class="faq-answer">
+                            O tempo varia conforme a complexidade do projeto. Sites institucionais: 2-4 semanas, 
+                            E-commerce: 4-8 semanas, Aplicações web complexas: 8-16 semanas. Fornecemos um cronograma 
+                            detalhado durante a fase de planejamento.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Oferecem suporte pós-lançamento?
+                            <span class="material-symbols-outlined faq-icon">expand_more</span>
+                        </div>
+                        <div class="faq-answer">
+                            Sim! Oferecemos pacotes de suporte que incluem manutenção, atualizações de segurança, 
+                            backups, monitoramento e suporte técnico. Temos opções mensais e anuais para atender 
+                            diferentes necessidades.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Posso migrar meu site existente?
+                            <span class="material-symbols-outlined faq-icon">expand_more</span>
+                        </div>
+                        <div class="faq-answer">
+                            Com certeza! Oferecemos serviços de migração para trazer seu site existente para nossa 
+                            plataforma. Analisamos sua situação atual e criamos um plano de migração seguro para 
+                            evitar downtime e perda de dados.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <div class="logo-icon">TD</div>
+                        <div class="logo-text">TDC-Dev</div>
+                    </div>
+                    <p class="footer-description">
+                        Transformamos ideias em realidade digital com soluções inovadoras e tecnologia de ponta. 
+                        Seu sucesso é nossa missão.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">public</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">chat</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">diversity_3</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span class="material-symbols-outlined">video_library</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-links-column">
+                    <h3 class="footer-heading">Serviços</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Desenvolvimento Web</a></li>
+                        <li><a href="#">Aplicações Mobile</a></li>
+                        <li><a href="#">E-commerce</a></li>
+                        <li><a href="#">UX/UI Design</a></li>
+                        <li><a href="#">Consultoria</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links-column">
+                    <h3 class="footer-heading">Empresa</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Sobre Nós</a></li>
+                        <li><a href="#">Cases de Sucesso</a></li>
+                        <li><a href="#">Carreiras</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Contato</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-newsletter">
+                    <h3 class="footer-heading">Newsletter</h3>
+                    <p class="newsletter-text">
+                        Receba as últimas novidades sobre tecnologia e desenvolvimento diretamente no seu email.
+                    </p>
+                    <form class="newsletter-form">
+                        <input type="email" class="newsletter-input" placeholder="Seu melhor email" required>
+                        <button type="submit" class="btn btn-primary">Inscrever</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    © 2024 TDC-Dev. Todos os direitos reservados.
+                </div>
+                <div class="footer-legal">
+                    <a href="#">Política de Privacidade</a>
+                    <a href="#">Termos de Serviço</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modais -->
+    <!-- Modal de Login -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Entrar na TDC-Dev</h3>
+                <button class="modal-close" id="loginModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <div class="input-with-icon">
+                            <span class="material-symbols-outlined input-icon">person</span>
+                            <input type="email" class="form-input" placeholder="seuemail@exemplo.com" required id="loginEmail">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Senha</label>
+                        <div class="input-with-icon">
+                            <span class="material-symbols-outlined input-icon">lock</span>
+                            <input type="password" class="form-input" placeholder="Sua senha" required id="loginPassword">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Lembrar de mim</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1.5rem;">Entrar</button>
+                </form>
+
+                <div class="form-divider">
+                    <span>OU</span>
+                </div>
+
+                <button class="btn btn-google" style="width: 100%; margin-bottom: 1.5rem;" id="googleLoginBtn">
+                    <span class="material-symbols-outlined">public</span>
+                    Entrar com Google
+                </button>
+
+                <div style="text-align: center;">
+                    <a href="#" style="color: var(--primary); text-decoration: none;">Esqueceu sua senha?</a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <p style="color: var(--text-light); font-size: 0.9rem;">
+                    Não tem uma conta? <a href="#" style="color: var(--primary); text-decoration: none;" id="switchToRegister">Cadastre-se</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Criar Conta na TDC-Dev</h3>
+                <button class="modal-close" id="registerModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" class="form-input" placeholder="Seu nome completo" required id="registerName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" placeholder="seuemail@exemplo.com" required id="registerEmail">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Senha</label>
+                        <input type="password" class="form-input" placeholder="Crie uma senha forte" required id="registerPassword">
+                        <div class="form-helper">Mínimo 8 caracteres com letras e números</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirmar Senha</label>
+                        <input type="password" class="form-input" placeholder="Digite a senha novamente" required id="registerConfirmPassword">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="acceptTerms" required>
+                            <label class="form-check-label" for="acceptTerms">
+                                Concordo com os <a href="#">Termos de Serviço</a> e <a href="#">Política de Privacidade</a>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1.5rem;">Criar Conta</button>
+                </form>
+
+                <div class="form-divider">
+                    <span>OU</span>
+                </div>
+
+                <button class="btn btn-google" style="width: 100%;" id="googleRegisterBtn">
+                    <span class="material-symbols-outlined">public</span>
+                    Registrar com Google
+                </button>
+            </div>
+            <div class="modal-footer">
+                <p style="color: var(--text-light); font-size: 0.9rem;">
+                    Já tem uma conta? <a href="#" style="color: var(--primary); text-decoration: none;" id="switchToLogin">Faça login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Perfil -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Meu Perfil</h3>
+                <button class="modal-close" id="profileModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div class="user-avatar large" style="width: 100px; height: 100px; margin: 0 auto 1rem; position: relative;" id="profileAvatar">
+                        <span id="profileInitials" style="font-size: 2rem;">U</span>
+                        <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+                        <button class="btn btn-outline" style="position: absolute; bottom: -10px; right: -10px; padding: 0.5rem; border-radius: 50%;" id="changeAvatarBtn">
+                            <span class="material-symbols-outlined">photo_camera</span>
+                        </button>
+                    </div>
+                    <h4 id="profileUserName">Usuário</h4>
+                    <p style="color: var(--text-light);" id="profileUserEmail">usuario@exemplo.com</p>
+                </div>
+
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" class="form-input" id="profileName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="profileEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telefone</label>
+                        <input type="tel" class="form-input" id="profilePhone" placeholder="(11) 99999-9999">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Empresa</label>
+                        <input type="text" class="form-input" id="profileCompany" placeholder="Sua empresa (opcional)">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Salvar Alterações</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Recorte de Avatar -->
+    <div class="modal-overlay" id="cropModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Ajustar Foto de Perfil</h3>
+                <button class="modal-close" id="cropModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div id="cropContainer" style="width: 300px; height: 300px; margin: 0 auto; border-radius: 50%; overflow: hidden; position: relative; background: var(--black);">
+                        <img id="cropImage" src="" style="max-width: 100%; max-height: 100%; display: block;">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 50%; box-shadow: inset 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none;"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <label style="color: var(--white); margin-bottom: 0.5rem; display: block;">Zoom</label>
+                    <input type="range" min="1" max="3" step="0.1" value="1" id="zoomSlider" style="width: 100%;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cropCancelBtn">Cancelar</button>
+                <button class="btn btn-primary" id="cropSaveBtn">Salvar Foto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Resgate de Token -->
+    <div class="modal-overlay" id="tokenModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Resgatar Token</h3>
+                <button class="modal-close" id="tokenModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-light); margin-bottom: 2rem; text-align: center;">
+                    Insira seu token abaixo para resgatar sua recompensa e desbloquear acesso a recursos exclusivos.
+                </p>
+                <form id="tokenForm">
+                    <div class="form-group">
+                        <label class="form-label">Token</label>
+                        <input type="text" class="form-input" placeholder="Insira seu token aqui" required id="tokenInput">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Resgatar Token</button>
+                </form>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--glass-bg); border-radius: var(--border-radius); border: 1px solid var(--glass-border);">
+                    <h4 style="color: var(--white); margin-bottom: 1rem;">Como obter um token?</h4>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="width: 30px; height: 30px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); font-size: 0.8rem; font-weight: bold;">1</div>
+                        <span style="color: var(--text-light);">Finalize sua compra em nosso servidor do Discord</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="width: 30px; height: 30px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); font-size: 0.8rem; font-weight: bold;">2</div>
+                        <span style="color: var(--text-light);">Você receberá o token de ativação por mensagem direta</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 30px; height: 30px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); font-size: 0.8rem; font-weight: bold;">3</div>
+                        <span style="color: var(--text-light);">Cole o token acima e resgate seu plano</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
