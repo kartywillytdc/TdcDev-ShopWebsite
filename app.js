@@ -1119,4 +1119,625 @@ function joinDiscord() {
     }, 1000);
 }
 
-// ===== INICIALIZ
+// ===== INICIALIZAÇÃO DE EVENT LISTENERS =====
+function initializeEventListeners() {
+    // Event listeners para modais
+    document.querySelectorAll('[data-modal]').forEach(button => {
+        button.addEventListener('click', () => {
+            const modalId = button.getAttribute('data-modal');
+            openModal(modalId);
+        });
+    });
+
+    // Event listeners para fechar modais
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const modal = e.target.closest('.modal');
+            closeModal(modal.id);
+        });
+    });
+
+    // Event listeners para navegação mobile
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            toggleMobileMenu();
+        });
+    });
+
+    // Event listener para o formulário de chat
+    document.getElementById('chatForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        sendMessage();
+    });
+
+    // Event listener para o botão de enviar mensagem
+    document.getElementById('sendMessageBtn')?.addEventListener('click', sendMessage);
+
+    // Event listeners para o sistema de chat
+    document.getElementById('openChatBtn')?.addEventListener('click', () => openChat());
+    document.getElementById('closeChatBtn')?.addEventListener('click', closeChat);
+    document.getElementById('minimizeChatBtn')?.addEventListener('click', minimizeChat);
+    document.getElementById('chatMinimized')?.addEventListener('click', () => openChat());
+
+    // Event listener para o toggle de preços
+    document.getElementById('billingToggle')?.addEventListener('change', toggleBilling);
+
+    // Event listener para o Discord
+    document.getElementById('discordBtn')?.addEventListener('click', joinDiscord);
+}
+
+// ===== SISTEMA DE ADMINISTRAÇÃO =====
+async function loadAdminPanel() {
+    if (!isAdmin) return;
+
+    try {
+        // Carregar estatísticas
+        await loadAdminStats();
+        
+        // Carregar solicitações pendentes
+        await loadPendingRequests();
+        
+        // Carregar todos os chats
+        await loadAllChats();
+        
+        // Carregar usuários recentes
+        await loadRecentUsers();
+        
+    } catch (error) {
+        console.error('Erro ao carregar painel admin:', error);
+    }
+}
+
+async function loadAdminStats() {
+    try {
+        // Total de usuários
+        const usersSnapshot = await db.collection('users').get();
+        document.getElementById('totalUsers').textContent = usersSnapshot.size;
+
+        // Total de solicitações
+        const requestsSnapshot = await db.collection('requests').get();
+        document.getElementById('totalRequests').textContent = requestsSnapshot.size;
+
+        // Solicitações pendentes
+        const pendingRequests = await db.collection('requests')
+            .where('status', '==', 'pending')
+            .get();
+        document.getElementById('pendingRequests').textContent = pendingRequests.size;
+
+        // Chats ativos
+        const activeChats = await db.collection('chats')
+            .where('status', '==', 'open')
+            .get();
+        document.getElementById('activeChats').textContent = activeChats.size;
+
+    } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+    }
+}
+
+async function loadPendingRequests() {
+    const requestsContainer = document.getElementById('adminRequests');
+    if (!requestsContainer) return;
+
+    try {
+        const requestsSnapshot = await db.collection('requests')
+            .where('status', '==', 'pending')
+            .orderBy('createdAt', 'desc')
+            .limit(10)
+            .get();
+
+        requestsContainer.innerHTML = '';
+
+        if (requestsSnapshot.empty) {
+            requestsContainer.innerHTML = '<p class="no-data">Nenhuma solicitação pendente</p>';
+            return;
+        }
+
+        requestsSnapshot.forEach(doc => {
+            const request = doc.data();
+            const requestElement = createRequestElement(doc.id, request);
+            requestsContainer.appendChild(requestElement);
+        });
+
+    } catch (error) {
+        console.error('Erro ao carregar solicitações:', error);
+        requestsContainer.innerHTML = '<p class="error">Erro ao carregar solicitações</p>';
+    }
+}
+
+function createRequestElement(requestId, request) {
+    const element = document.createElement('div');
+    element.className = 'request-item';
+    element.innerHTML = `
+        <div class="request-header">
+            <h4>${request.projectName || 'Sem nome'}</h4>
+            <span class="plan-badge ${request.plan}">${request.plan}</span>
+        </div>
+        <div class="request-details">
+            <p><strong>Cliente:</strong> ${request.userName} (${request.userEmail})</p>
+            <p><strong>Tipo:</strong> ${request.projectType}</p>
+            <p><strong>Prazo:</strong> ${request.projectDeadline} dias</p>
+            <p><strong>Orçamento:</strong> R$ ${request.projectBudget}</p>
+            <p><strong>Descrição:</strong> ${request.projectDescription}</p>
+            ${request.projectReferences ? `<p><strong>Referências:</strong> ${request.projectReferences}</p>` : ''}
+        </div>
+        <div class="request-actions">
+            <button class="btn-success" onclick="approveRequest('${requestId}')">Aprovar</button>
+            <button class="btn-danger" onclick="rejectRequest('${requestId}')">Rejeitar</button>
+            <button class="btn-secondary" onclick="openChatForRequest('${requestId}', '${request.userId}')">Chat</button>
+        </div>
+    `;
+    return element;
+}
+
+async function approveRequest(requestId) {
+    if (!confirm('Tem certeza que deseja aprovar esta solicitação?')) return;
+
+    showLoading();
+
+    try {
+        await db.collection('requests').doc(requestId).update({
+            status: 'approved',
+            approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            approvedBy: currentUser.uid
+        });
+
+        // Gerar token automaticamente
+        const requestDoc = await db.collection('requests').doc(requestId).get();
+        const requestData = requestDoc.data();
+        
+        const tokenCode = generateTokenCode();
+        const tokenData = {
+            plan: requestData.plan,
+            createdBy: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 dias
+            used: false
+        };
+
+        await db.collection('tokens').doc(tokenCode).set(tokenData);
+
+        // Enviar notificação por email (simulado)
+        await sendApprovalEmail(requestData.userEmail, tokenCode);
+
+        showNotification('Solicitação aprovada e token gerado!', 'success');
+        await loadPendingRequests();
+        await loadAdminStats();
+
+    } catch (error) {
+        showNotification('Erro ao aprovar solicitação: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function rejectRequest(requestId) {
+    const reason = prompt('Digite o motivo da rejeição:');
+    if (!reason) return;
+
+    showLoading();
+
+    try {
+        await db.collection('requests').doc(requestId).update({
+            status: 'rejected',
+            rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            rejectedBy: currentUser.uid,
+            rejectionReason: reason
+        });
+
+        showNotification('Solicitação rejeitada!', 'success');
+        await loadPendingRequests();
+        await loadAdminStats();
+
+    } catch (error) {
+        showNotification('Erro ao rejeitar solicitação: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function generateTokenCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = 'TDC-';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+async function sendApprovalEmail(userEmail, tokenCode) {
+    // Em uma implementação real, você usaria um serviço de email
+    // Aqui estamos apenas simulando o envio
+    console.log(`Email enviado para ${userEmail} com token: ${tokenCode}`);
+    
+    // Você pode integrar com SendGrid, AWS SES, ou outro serviço de email
+    // Por enquanto, apenas mostramos uma notificação
+    showNotification(`Token ${tokenCode} gerado para ${userEmail}`, 'success');
+}
+
+async function openChatForRequest(requestId, userId) {
+    // Encontrar ou criar chat para este usuário
+    const chatSnapshot = await db.collection('chats')
+        .where('userId', '==', userId)
+        .where('status', '==', 'open')
+        .limit(1)
+        .get();
+
+    let chatId;
+
+    if (chatSnapshot.empty) {
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        
+        const chatData = {
+            userId: userId,
+            userName: userData.name,
+            userEmail: userData.email,
+            adminId: currentUser.uid,
+            adminName: currentUser.displayName,
+            requestId: requestId,
+            status: 'open',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        const chatRef = await db.collection('chats').add(chatData);
+        chatId = chatRef.id;
+    } else {
+        chatId = chatSnapshot.docs[0].id;
+    }
+
+    openChat(chatId);
+}
+
+// ===== SISTEMA DE RELATÓRIOS =====
+async function generateReport() {
+    if (!isAdmin) return;
+
+    const reportType = document.getElementById('reportType').value;
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+
+    if (!startDate || !endDate) {
+        showNotification('Selecione as datas inicial e final.', 'error');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        let reportData = {};
+
+        switch (reportType) {
+            case 'users':
+                reportData = await generateUsersReport(start, end);
+                break;
+            case 'requests':
+                reportData = await generateRequestsReport(start, end);
+                break;
+            case 'revenue':
+                reportData = await generateRevenueReport(start, end);
+                break;
+        }
+
+        displayReport(reportData, reportType);
+
+    } catch (error) {
+        showNotification('Erro ao gerar relatório: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function generateUsersReport(startDate, endDate) {
+    const usersSnapshot = await db.collection('users')
+        .where('createdAt', '>=', startDate)
+        .where('createdAt', '<=', endDate)
+        .get();
+
+    const usersByPlan = {};
+    const usersByDay = {};
+
+    usersSnapshot.forEach(doc => {
+        const user = doc.data();
+        const plan = user.plan || 'free';
+        const date = user.createdAt.toDate().toISOString().split('T')[0];
+
+        usersByPlan[plan] = (usersByPlan[plan] || 0) + 1;
+        usersByDay[date] = (usersByDay[date] || 0) + 1;
+    });
+
+    return {
+        total: usersSnapshot.size,
+        byPlan: usersByPlan,
+        byDay: usersByDay
+    };
+}
+
+async function generateRequestsReport(startDate, endDate) {
+    const requestsSnapshot = await db.collection('requests')
+        .where('createdAt', '>=', startDate)
+        .where('createdAt', '<=', endDate)
+        .get();
+
+    const requestsByPlan = {};
+    const requestsByStatus = {};
+    const requestsByDay = {};
+
+    requestsSnapshot.forEach(doc => {
+        const request = doc.data();
+        const plan = request.plan;
+        const status = request.status;
+        const date = request.createdAt.toDate().toISOString().split('T')[0];
+
+        requestsByPlan[plan] = (requestsByPlan[plan] || 0) + 1;
+        requestsByStatus[status] = (requestsByStatus[status] || 0) + 1;
+        requestsByDay[date] = (requestsByDay[date] || 0) + 1;
+    });
+
+    return {
+        total: requestsSnapshot.size,
+        byPlan: requestsByPlan,
+        byStatus: requestsByStatus,
+        byDay: requestsByDay
+    };
+}
+
+async function generateRevenueReport(startDate, endDate) {
+    // Esta é uma simulação - em uma aplicação real, você teria dados de pagamento
+    const requestsSnapshot = await db.collection('requests')
+        .where('status', '==', 'approved')
+        .where('approvedAt', '>=', startDate)
+        .where('approvedAt', '<=', endDate)
+        .get();
+
+    const revenueByPlan = {
+        basic: 0,
+        pro: 0,
+        premium: 0
+    };
+
+    const planPrices = {
+        basic: 299,
+        pro: 599,
+        premium: 999
+    };
+
+    requestsSnapshot.forEach(doc => {
+        const request = doc.data();
+        const plan = request.plan;
+        if (planPrices[plan]) {
+            revenueByPlan[plan] += planPrices[plan];
+        }
+    });
+
+    const totalRevenue = Object.values(revenueByPlan).reduce((sum, revenue) => sum + revenue, 0);
+
+    return {
+        total: totalRevenue,
+        byPlan: revenueByPlan
+    };
+}
+
+function displayReport(reportData, reportType) {
+    const reportOutput = document.getElementById('reportOutput');
+    
+    let html = `<h3>Relatório de ${getReportTypeName(reportType)}</h3>`;
+    html += `<p><strong>Total:</strong> ${formatReportData(reportData.total, reportType)}</p>`;
+
+    if (reportData.byPlan) {
+        html += '<h4>Por Plano:</h4><ul>';
+        for (const [plan, count] of Object.entries(reportData.byPlan)) {
+            html += `<li>${plan}: ${formatReportData(count, reportType)}</li>`;
+        }
+        html += '</ul>';
+    }
+
+    if (reportData.byStatus) {
+        html += '<h4>Por Status:</h4><ul>';
+        for (const [status, count] of Object.entries(reportData.byStatus)) {
+            html += `<li>${status}: ${formatReportData(count, reportType)}</li>`;
+        }
+        html += '</ul>';
+    }
+
+    reportOutput.innerHTML = html;
+}
+
+function getReportTypeName(type) {
+    const names = {
+        users: 'Usuários',
+        requests: 'Solicitações',
+        revenue: 'Receita'
+    };
+    return names[type] || type;
+}
+
+function formatReportData(data, type) {
+    if (type === 'revenue') {
+        return `R$ ${data.toFixed(2)}`;
+    }
+    return data;
+}
+
+// ===== GERENCIAMENTO DE TOKENS =====
+async function generateToken() {
+    if (!isAdmin) return;
+
+    const plan = document.getElementById('tokenPlan').value;
+    const expires = document.getElementById('tokenExpires').value;
+
+    if (!plan || !expires) {
+        showNotification('Selecione o plano e a data de expiração.', 'error');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        const tokenCode = generateTokenCode();
+        const tokenData = {
+            plan: plan,
+            createdBy: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            expires: new Date(expires),
+            used: false
+        };
+
+        await db.collection('tokens').doc(tokenCode).set(tokenData);
+
+        document.getElementById('generatedToken').textContent = tokenCode;
+        document.getElementById('tokenResult').style.display = 'block';
+        
+        showNotification(`Token ${tokenCode} gerado com sucesso!`, 'success');
+
+    } catch (error) {
+        showNotification('Erro ao gerar token: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===== UTILITÁRIOS ADICIONAIS =====
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('Copiado para a área de transferência!', 'success');
+    }).catch(() => {
+        showNotification('Erro ao copiar texto.', 'error');
+    });
+}
+
+function formatCurrency(value) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(value);
+}
+
+function formatDate(date) {
+    return new Intl.DateTimeFormat('pt-BR').format(date);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ===== LISTENERS GLOBAIS =====
+document.addEventListener('keydown', (e) => {
+    // Fechar modais com ESC
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal[style*="display: block"]');
+        openModals.forEach(modal => {
+            closeModal(modal.id);
+        });
+    }
+});
+
+// Prevenir envio de formulário ao pressionar Enter em inputs não-submit
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !e.target.closest('form')) {
+        e.preventDefault();
+    }
+});
+
+// ===== EXPORTAÇÃO DE DADOS =====
+async function exportData() {
+    if (!isAdmin) return;
+
+    const exportType = document.getElementById('exportType').value;
+    
+    showLoading();
+
+    try {
+        let data;
+        
+        switch (exportType) {
+            case 'users':
+                data = await exportUsers();
+                break;
+            case 'requests':
+                data = await exportRequests();
+                break;
+            case 'tokens':
+                data = await exportTokens();
+                break;
+        }
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tdc-${exportType}-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showNotification('Dados exportados com sucesso!', 'success');
+
+    } catch (error) {
+        showNotification('Erro ao exportar dados: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function exportUsers() {
+    const snapshot = await db.collection('users').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+async function exportRequests() {
+    const snapshot = await db.collection('requests').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+async function exportTokens() {
+    const snapshot = await db.collection('tokens').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// ===== INICIALIZAÇÃO FINAL =====
+// Garantir que todas as funções estejam disponíveis globalmente
+window.toggleMobileMenu = toggleMobileMenu;
+window.scrollToSection = scrollToSection;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.toggleUserDropdown = toggleUserDropdown;
+window.closeUserDropdown = closeUserDropdown;
+window.openProfileModal = openProfileModal;
+window.showTokenModal = showTokenModal;
+window.openAdminPanel = openAdminPanel;
+window.logout = logout;
+window.signInWithGoogle = signInWithGoogle;
+window.openRequestModal = openRequestModal;
+window.toggleBilling = toggleBilling;
+window.joinDiscord = joinDiscord;
+window.openChat = openChat;
+window.closeChat = closeChat;
+window.minimizeChat = minimizeChat;
+window.sendMessage = sendMessage;
+window.generateReport = generateReport;
+window.generateToken = generateToken;
+window.copyToClipboard = copyToClipboard;
+window.exportData = exportData;
+window.approveRequest = approveRequest;
+window.rejectRequest = rejectRequest;
+window.openChatForRequest = openChatForRequest;
+
+// Inicialização quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+        }
